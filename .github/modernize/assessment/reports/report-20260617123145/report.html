@@ -1,0 +1,1631 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Assessment - spring-petclinic</title>
+<style>
+:root {
+  --bg-primary: #ffffff;
+  --bg-card: #f8f9fa;
+  --bg-page: #f0f1f3;
+  --text-primary: #24292f;
+  --text-secondary: #57606a;
+  --text-muted: #6b7280;
+  --border-color: #d0d7de;
+  --border-light: #e1e4e8;
+  --link-color: #2563eb;
+  --color-mandatory: #E3008C;
+  --color-potential: #637CEF;
+  --color-optional: #A19F9D;
+  --font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+  --font-mono: 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-family); font-size: 13px; color: var(--text-primary); background: var(--bg-primary); line-height: 1.5; margin: 0; padding: 0; }
+a { color: var(--link-color); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── Page layout ───────────────────────────────────────────── */
+.main { margin: 0; padding: 24px 32px; background: var(--bg-primary); }
+.back-link { color: var(--text-muted); font-size: 13px; margin-bottom: 16px; display: block; }
+h1 { font-weight: 600; font-size: 20px; color: var(--text-primary); margin-bottom: 20px; }
+
+/* ── Report cards (matches VS Code .vscode-report-card) ──── */
+.report-card { background: var(--bg-card); border: 1px solid var(--border-light); border-radius: 4px; padding: 12px; margin-bottom: 20px; }
+.report-card h2 { font-size: 14px; font-weight: 600; margin: 0; color: var(--text-primary); }
+.report-card-body { margin-top: 16px; }
+
+/* ── Component Information (two-column) ────────────────── */
+.app-info-container { display: flex; gap: 8px; flex-wrap: wrap; }
+.app-info-column { flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 8px; }
+.app-info-row { display: flex; align-items: baseline; }
+.app-info-label { width: 136px; flex-shrink: 0; font-weight: 600; color: var(--text-primary); }
+.app-info-value { flex: 1; color: var(--text-primary); }
+
+/* ── Issue Summary (pie charts + legend) ─────────────────── */
+.cards-container { display: flex; align-items: stretch; gap: 20px; flex-wrap: wrap; }
+.issue-summary-card { flex: 2; }
+.domain-summary-container { display: flex; flex-wrap: wrap; gap: 20px; justify-content: space-around; }
+.domain-summary-item { flex: 1; min-width: 120px; text-align: center; padding: 0 16px; border-right: 1px solid var(--border-light); }
+.domain-summary-item:last-child { border-right: none; }
+.domain-summary-item h3 { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-top: 8px; }
+.domain-summary-item .count { font-size: 12px; color: var(--text-secondary); }
+.criticality-legend { display: flex; flex-wrap: wrap; gap: 15px; padding-top: 12px; justify-content: center; }
+.criticality-legend .legend-item { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--text-secondary); }
+.legend-swatch { display: inline-block; width: 1em; height: 1em; border-radius: 2px; }
+
+/* ── Issue list tables ───────────────────────────────────── */
+.issue-section { margin-top: 20px; }
+.issue-section h2 { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+.issue-table { width: 100%; border-collapse: collapse; table-layout: fixed; min-width: 600px; }
+.issue-table th { text-align: left; text-transform: uppercase; font-weight: 600; font-size: calc(13px * 0.875); padding: 6px 8px; background: var(--bg-card); border-bottom: 1px solid var(--border-color); color: var(--text-secondary); position: sticky; top: 0; z-index: 1; }
+.issue-table td { padding: 12px 8px; border-bottom: 1px solid var(--border-light); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
+.col-issue { width: 55%; }
+.col-criticality { width: 25%; }
+.col-storypoint { width: 20%; }
+
+/* ── Target dropdown ─────────────────────────────────────── */
+.target-select-container { margin: 4px 0 16px 0; display: flex; align-items: center; gap: 8px; }
+.target-select-container label { font-weight: 600; color: var(--text-primary); font-size: 14px; }
+.target-select-container select { font-family: var(--font-family); font-size: 13px; padding: 4px 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-primary); color: var(--text-primary); cursor: pointer; }
+
+/* ── Filter bar ──────────────────────────────────────────── */
+.filter-bar { display: flex; flex-wrap: wrap; gap: 16px; margin: 16px 0 8px 0; align-items: center; }
+.multi-select { position: relative; display: inline-block; min-width: 140px; }
+.multi-select-btn { font-family: var(--font-family); font-size: 13px; padding: 4px 24px 4px 8px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-primary); color: var(--text-primary); cursor: pointer; width: 100%; text-align: left; position: relative; white-space: nowrap; }
+.multi-select-btn::after { content: '\25BE'; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 11px; color: var(--text-secondary); }
+.multi-select-dropdown { display: none; position: absolute; top: 100%; left: 0; min-width: 100%; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 100; margin-top: 2px; }
+.multi-select.open .multi-select-dropdown { display: block; }
+.multi-select-option { display: flex; align-items: center; gap: 6px; padding: 5px 10px; cursor: pointer; font-size: 13px; white-space: nowrap; }
+.multi-select-option:hover { background: var(--bg-secondary); }
+.multi-select-option input[type=checkbox] { margin: 0; cursor: pointer; }
+.clear-filters { font-size: 12px; color: var(--link-color); cursor: pointer; margin-left: 4px; }
+
+/* ── Criticality labels (colored square + text) ──────────── */
+.crit-label { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; white-space: nowrap; }
+.crit-square { display: inline-block; width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+.crit-square-mandatory { background: var(--color-mandatory); }
+.crit-square-potential { background: var(--color-potential); }
+.crit-square-optional { background: var(--color-optional); }
+
+/* ── Expandable rows ─────────────────────────────────────── */
+.expand-btn { background: none; border: none; cursor: pointer; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 11px; transition: transform 0.15s; padding: 0; vertical-align: middle; flex-shrink: 0; }
+.expand-btn.open { transform: rotate(90deg); }
+.issue-title-cell { display: flex; align-items: center; gap: 4px; }
+.detail-row td { padding: 0; border-bottom: 1px solid var(--border-light); white-space: normal; overflow: visible; text-overflow: clip; }
+.detail-content { display: flex; gap: 0; padding: 8px 8px 8px 32px; min-width: 0; }
+.file-list { flex: 0 0 50%; min-width: 0; overflow: hidden; }
+.file-list table { width: 100%; border-collapse: collapse; }
+.file-list th { font-size: calc(13px * 0.875); text-transform: uppercase; font-weight: 600; color: var(--text-secondary); padding: 6px 8px; border-bottom: 1px solid var(--border-color); text-align: left; height: 32px; }
+.file-list td { font-size: 13px; padding: 6px 8px; border-bottom: 1px solid var(--border-light); color: var(--text-primary); }
+.file-list .file-path { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 300px; display: block; }
+.file-list .position { font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary); }
+.explanation-panel { flex: 1; padding-left: 16px; min-width: 0; overflow-wrap: break-word; word-wrap: break-word; }
+.explanation-panel h4 { font-size: calc(13px * 0.875); text-transform: uppercase; font-weight: 600; color: var(--text-secondary); padding: 6px 0; border-bottom: 1px solid var(--border-color); height: 32px; margin: 0; }
+.explanation-panel p { font-size: 13px; padding: 8px 0; color: var(--text-primary); line-height: 1.6; white-space: normal; word-break: break-word; }
+
+/* ── Experimental badge ──────────────────────────────────── */
+.badge-experimental { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; background: #fef9c3; color: #854d0e; vertical-align: middle; margin-left: 8px; cursor: default; }
+
+/* ── Footer ──────────────────────────────────────────────── */
+.footer { text-align: center; margin-top: 24px; color: var(--text-muted); font-size: 13px; }
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 800px) {
+  .main { padding: 16px; }
+  .app-info-container { flex-direction: column; }
+  .domain-summary-container { flex-direction: column; }
+  .domain-summary-item { border-right: none; border-bottom: 1px solid var(--border-light); padding-bottom: 12px; }
+  .detail-content { flex-direction: column; }
+  .file-list { flex: none; width: 100%; }
+  .explanation-panel { padding-left: 0; padding-top: 8px; }
+}
+/* ── Tab navigation ──────────────────────────────────────── */
+.tab-nav { display: flex; gap: 0; border-bottom: 1px solid var(--border-color); margin-bottom: 28px; flex-wrap: wrap; }
+.tab-btn { background: none; border: none; border-bottom: 2px solid transparent; padding: 10px 18px; font-size: 13px; font-family: var(--font-family); color: var(--text-secondary); cursor: pointer; margin-bottom: -1px; white-space: nowrap; position: relative; }
+.tab-btn:hover { color: var(--text-primary); }
+.tab-btn.active { color: var(--link-color); border-bottom-color: var(--link-color); font-weight: 600; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── Tooltip on tab ──────────────────────────────────────── */
+.tab-btn[data-tooltip]::after { content: attr(data-tooltip); position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: #24292f; color: #ffffff; font-size: 12px; font-weight: 400; padding: 6px 10px; border-radius: 4px; white-space: normal; width: max-content; max-width: 260px; text-align: center; pointer-events: none; opacity: 0; transition: opacity 0.15s; z-index: 100; }
+.tab-btn[data-tooltip]:hover::after { opacity: 1; }
+
+/* ── Fact content — prose column ─────────────────────────── */
+.fact-content { max-width: 860px; margin: 0 auto; line-height: 1.75; color: var(--text-primary); font-size: 14px; }
+.fact-content h1 { font-size: 22px; font-weight: 700; margin: 0 0 6px 0; color: var(--text-primary); letter-spacing: -0.01em; }
+.fact-content h1 + p { margin-top: 6px; color: var(--text-secondary); font-size: 14px; margin-bottom: 24px; }
+.fact-content h2 { font-size: 17px; font-weight: 700; margin: 36px 0 12px 0; padding-bottom: 6px; border-bottom: 1px solid var(--border-color); color: var(--text-primary); letter-spacing: -0.01em; }
+.fact-content h3 { font-size: 14px; font-weight: 700; margin: 24px 0 8px 0; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.04em; font-size: 12px; color: var(--text-secondary); }
+.fact-content p { margin: 10px 0; color: var(--text-primary); }
+.fact-content ul, .fact-content ol { margin: 10px 0 10px 22px; }
+.fact-content li { margin: 5px 0; }
+.fact-content a { color: var(--link-color); }
+.fact-content a:hover { text-decoration: underline; }
+
+/* ── Fact tables ─────────────────────────────────────────── */
+.table-wrap { overflow-x: auto; margin: 16px 0; }
+.fact-content table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 13px; border-radius: 6px; overflow: hidden; border: 1px solid var(--border-color); }
+.fact-content thead { background: var(--bg-card); }
+.fact-content th { text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; padding: 8px 14px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); }
+.fact-content td { padding: 9px 14px; border-bottom: 1px solid var(--border-light); vertical-align: top; color: var(--text-primary); }
+.fact-content tr:last-child td { border-bottom: none; }
+.fact-content tbody tr:hover { background: #f6f8fa; }
+
+/* ── Fact code ───────────────────────────────────────────── */
+.fact-content code { font-family: var(--font-mono); font-size: 12px; background: #f0f1f3; padding: 2px 6px; border-radius: 4px; color: #c7254e; }
+.fact-content pre { background: #f6f8fa; border: 1px solid var(--border-light); border-radius: 6px; padding: 14px 16px; overflow-x: auto; margin: 14px 0; }
+.fact-content pre code { background: none; color: var(--text-primary); padding: 0; border-radius: 0; }
+.fact-content hr { border: none; border-top: 1px solid var(--border-light); margin: 28px 0; }
+.fact-content strong { font-weight: 600; }
+.fact-content em { font-style: italic; }
+.fact-content blockquote { border-left: 3px solid var(--border-color); margin: 12px 0; padding: 4px 16px; color: var(--text-secondary); }
+.fact-unavailable { padding: 32px 0; }
+.fact-unavailable h3 { font-size: 16px; font-weight: 600; color: var(--text-primary); text-transform: none; letter-spacing: 0; margin: 0 0 12px 0; }
+.fact-unavailable p { margin: 0 0 8px 0; color: var(--text-secondary); }
+.fact-unavailable ol, .fact-unavailable ul { margin: 0 0 0 22px; color: var(--text-primary); }
+.fact-unavailable li { margin: 6px 0; }
+
+/* ── Mermaid diagram card ─────────────────────────────────── */
+.mermaid { background: var(--bg-card); border: 1px solid var(--border-light); border-radius: 8px; padding: 24px 16px; margin: 20px 0; overflow-x: auto; text-align: center; cursor: pointer; position: relative; }
+.mermaid:hover { border-color: var(--border-color); }
+.mermaid svg { max-width: 100%; height: auto !important; display: inline-block; }
+.mermaid-zoom-hint { position: absolute; top: 8px; right: 10px; font-size: 11px; color: var(--text-muted); opacity: 0; transition: opacity 0.15s; pointer-events: none; }
+.mermaid:hover .mermaid-zoom-hint { opacity: 1; }
+
+/* ── Diagram lightbox ────────────────────────────────────── */
+.diagram-lightbox { display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.7); backdrop-filter: blur(2px); align-items: center; justify-content: center; cursor: zoom-out; padding: 48px 32px; }
+.diagram-lightbox.open { display: flex; }
+.diagram-lightbox-inner { background: #ffffff; border-radius: 10px; padding: 32px; width: 88vw; max-height: 88vh; overflow: hidden; cursor: default; box-shadow: 0 24px 64px rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; }
+.diagram-lightbox-inner svg { width: 100% !important; height: auto !important; max-height: 76vh; display: block; }
+.diagram-lightbox-close { position: fixed; top: 20px; right: 24px; background: #ffffff; border: none; border-radius: 50%; width: 36px; height: 36px; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-primary); box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 1001; }
+.diagram-lightbox-close:hover { background: var(--bg-card); }
+.diagram-lightbox-hint { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.55); color: #ffffff; font-size: 12px; padding: 6px 14px; border-radius: 20px; pointer-events: none; white-space: nowrap; z-index: 1001; }
+</style>
+<script>
+window.__mermaidPending = [];
+window.__mermaidReady = false;
+window.__renderMermaidIn = function(container) {
+  if (container) { window.__mermaidPending.push(container); }
+};
+</script>
+<script type="module">
+import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+mermaid.initialize({ startOnLoad: false, theme: 'default', flowchart: { useMaxWidth: true }, sequence: { useMaxWidth: true } });
+
+window.__renderMermaidIn = function(container) {
+  var nodes = container ? container.querySelectorAll('.mermaid:not([data-processed])') : [];
+  if (nodes.length > 0) {
+    mermaid.run({ nodes: Array.from(nodes) }).then(function() {
+      nodes.forEach(function(node) {
+        if (!node.querySelector('.mermaid-zoom-hint')) {
+          var hint = document.createElement('span');
+          hint.className = 'mermaid-zoom-hint';
+          hint.textContent = 'Click to expand';
+          node.appendChild(hint);
+        }
+      });
+    });
+  }
+};
+
+var drained = new Set();
+(window.__mermaidPending || []).forEach(function(c) {
+  if (!drained.has(c)) { drained.add(c); window.__renderMermaidIn(c); }
+});
+window.__mermaidPending = [];
+window.__mermaidReady = true;
+
+function renderActivePanels() {
+  document.querySelectorAll('.tab-panel.active').forEach(function(p) {
+    if (!drained.has(p)) { drained.add(p); window.__renderMermaidIn(p); }
+  });
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', renderActivePanels);
+} else {
+  renderActivePanels();
+}
+</script>
+</head><body>
+<div id="diagram-lightbox" class="diagram-lightbox" role="dialog" aria-modal="true">
+  <button class="diagram-lightbox-close" id="diagram-lightbox-close" aria-label="Close">&#x2715;</button>
+  <div class="diagram-lightbox-hint">Scroll to zoom &nbsp;&middot;&nbsp; Drag to pan &nbsp;&middot;&nbsp; Double-click to reset</div>
+  <div class="diagram-lightbox-inner" id="diagram-lightbox-inner"></div>
+</div>
+<div class="main">
+<h1>spring-petclinic</h1>
+<div class="report-card">
+  <h2>Component Information</h2>
+  <div class="report-card-body">
+    <div class="app-info-container">
+      <div class="app-info-column">
+        <div class="app-info-row"><span class="app-info-label">Component Name</span><span class="app-info-value">spring-petclinic</span></div>
+        <div class="app-info-row"><span class="app-info-label">Java Version</span><span class="app-info-value">1.8</span></div>
+        <div class="app-info-row"><span class="app-info-label">Effort</span><span class="app-info-value" id="effort-display">M (total story points: 43)</span></div>
+      </div>
+      <div class="app-info-column">
+        <div class="app-info-row"><span class="app-info-label">Build Tools</span><span class="app-info-value">Gradle, Maven</span></div>
+        <div class="app-info-row"><span class="app-info-label">Frameworks</span><span class="app-info-value">Spring Boot, Spring</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+<nav class="tab-nav">
+  <button class="tab-btn active" data-tab="tab-issues" data-tooltip="Issues detected in the source code">Issues</button>
+  <button class="tab-btn" data-tab="tab-arch" data-tooltip="How the app&#x27;s layers connect — from UI to data.">Architecture</button>
+  <button class="tab-btn" data-tab="tab-api" data-tooltip="Endpoints exposed by this app and how services communicate.">API Contracts</button>
+  <button class="tab-btn" data-tab="tab-config" data-tooltip="Environment settings, runtime profiles, and deployment manifests.">Configuration</button>
+  <button class="tab-btn" data-tab="tab-workflows" data-tooltip="Domain entities and the core flows users move through.">Business Workflows</button>
+  <button class="tab-btn" data-tab="tab-deps" data-tooltip="Libraries and frameworks this app depends on, grouped by category.">Dependencies</button>
+  <button class="tab-btn" data-tab="tab-data" data-tooltip="Database schema, entity relationships, and persistence behavior.">Data Model</button>
+</nav>
+<div id="tab-issues" class="tab-panel active">
+<div class="target-select-container">
+  <label for="target-select">Target Compute Service:</label>
+  <select id="target-select" onchange="onTargetChange(this.value)">
+    <option value="azure-aks">Azure Kubernetes Service</option>
+  </select>
+</div>
+<div class="report-card">
+  <h2>Issue Summary</h2>
+  <div class="report-card-body">
+    <div class="domain-summary-container" id="donut-container">
+      <div class="domain-summary-item">
+<svg viewBox="0 0 100 100" width="100" height="100" style="display:block;margin:0 auto;transform:rotate(-90deg);">
+  <circle cx="50" cy="50" r="35" fill="none" stroke="var(--color-mandatory)" stroke-width="15" stroke-dasharray="92.75 219.91" stroke-dashoffset="-0.00"/>
+  <circle cx="50" cy="50" r="35" fill="none" stroke="var(--color-potential)" stroke-width="15" stroke-dasharray="92.75 219.91" stroke-dashoffset="-94.25"/>
+  <circle cx="50" cy="50" r="35" fill="none" stroke="var(--color-optional)" stroke-width="15" stroke-dasharray="29.92 219.91" stroke-dashoffset="-188.50"/>
+</svg>
+
+        <h3>Cloud Readiness</h3>
+        <div class="count">7 issues</div>
+      </div>
+      <div class="domain-summary-item">
+<svg viewBox="0 0 100 100" width="100" height="100" style="display:block;margin:0 auto;transform:rotate(-90deg);">
+  <circle cx="50" cy="50" r="35" fill="none" stroke="var(--color-mandatory)" stroke-width="15" stroke-dasharray="108.46 219.91" stroke-dashoffset="-0.00"/>
+  <circle cx="50" cy="50" r="35" fill="none" stroke="var(--color-optional)" stroke-width="15" stroke-dasharray="108.46 219.91" stroke-dashoffset="-109.96"/>
+</svg>
+
+        <h3>Java Upgrade</h3>
+        <div class="count">2 issues</div>
+      </div>
+    </div>
+    <div class="criticality-legend">
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--color-mandatory)"></span>Mandatory</div>
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--color-potential)"></span>Potential</div>
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--color-optional)"></span>Optional</div>
+    </div>
+  </div>
+</div>
+<div class="filter-bar" id="filter-bar">
+  <div class="multi-select" id="domain-ms">
+    <button class="multi-select-btn" onclick="toggleMultiSelect('domain-ms')">Domain</button>
+    <div class="multi-select-dropdown">
+      <label class="multi-select-option"><input type="checkbox" value="cloud-readiness" onchange="onMultiSelectChange('domain-ms','Domain')"/> Cloud Readiness</label>
+      <label class="multi-select-option"><input type="checkbox" value="java-upgrade" onchange="onMultiSelectChange('domain-ms','Domain')"/> Java Upgrade</label>
+    </div>
+  </div>
+  <div class="multi-select" id="criticality-ms">
+    <button class="multi-select-btn" onclick="toggleMultiSelect('criticality-ms')">Criticality</button>
+    <div class="multi-select-dropdown">
+      <label class="multi-select-option"><input type="checkbox" value="mandatory" onchange="onMultiSelectChange('criticality-ms','Criticality')"/> Mandatory</label>
+      <label class="multi-select-option"><input type="checkbox" value="potential" onchange="onMultiSelectChange('criticality-ms','Criticality')"/> Potential</label>
+      <label class="multi-select-option"><input type="checkbox" value="optional" onchange="onMultiSelectChange('criticality-ms','Criticality')"/> Optional</label>
+    </div>
+  </div>
+  <a class="clear-filters" href="javascript:void(0)" onclick="clearAllFilters()">Clear all</a>
+</div>
+<div class="issue-section" data-domain="cloud-readiness">
+  <h2>Cloud Readiness</h2>
+  <table class="issue-table">
+    <colgroup><col class="col-issue"/><col class="col-criticality"/><col class="col-storypoint"/></colgroup>
+    <thead><tr><th>Issue Category</th><th>Criticality</th><th>Story Point</th></tr></thead>
+    <tbody>
+    <tr class="issue-row" data-criticality="mandatory" data-targets='{&quot;azure-aks&quot;:{&quot;effort&quot;:5,&quot;severity&quot;:&quot;mandatory&quot;},&quot;azure-appservice&quot;:{&quot;effort&quot;:5,&quot;severity&quot;:&quot;mandatory&quot;},&quot;azure-container-apps&quot;:{&quot;effort&quot;:5,&quot;severity&quot;:&quot;mandatory&quot;}}' data-default-effort="5" data-default-severity="mandatory" data-rule="localhost-jdbc-00002" onclick="toggleRow('row-cloudreadiness-0', this)" style="cursor:pointer;">
+      <td style="white-space:normal;"><div class="issue-title-cell"><button class="expand-btn" id="btn-row-cloudreadiness-0">&#x276F;</button> Local JDBC Calls</div></td>
+      <td class="crit-cell"><span class="crit-label"><span class="crit-square crit-square-mandatory"></span>Mandatory</span></td>
+      <td class="sp-cell">5</td>
+    </tr>
+    <tr class="detail-row" id="row-cloudreadiness-0" style="display:none;">
+      <td colspan="3">
+        <div class="detail-content">
+          <div class="file-list">
+            <table><colgroup><col style="width:70%"/><col style="width:30%"/></colgroup>
+            <thead><tr><th>File</th><th>Position</th></tr></thead><tbody>
+            <tr><td><span class="file-path" title="src/main/resources/application-mysql.properties">src/main/resources/application-mysql.properties</span></td><td><span class="position">Line 3</span></td></tr>
+            <tr><td><span class="file-path" title="src/main/resources/application-postgres.properties">src/main/resources/application-postgres.properties</span></td><td><span class="position">Line 2</span></td></tr>
+            </tbody></table>
+          </div>
+          <div class="explanation-panel">
+            <h4>Explanation</h4>
+            <div><p>The app is trying to access local resource by JDBC, please try to migrate the resource to cloud</p></div>
+          </div>
+        </div>
+      </td>
+    </tr>
+    <tr class="issue-row" data-criticality="mandatory" data-targets='{&quot;azure-aks&quot;:{&quot;effort&quot;:3,&quot;severity&quot;:&quot;mandatory&quot;},&quot;azure-appservice&quot;:{&quot;effort&quot;:3,&quot;severity&quot;:&quot;mandatory&quot;},&quot;azure-container-apps&quot;:{&quot;effort&quot;:3,&quot;severity&quot;:&quot;mandatory&quot;}}' data-default-effort="3" data-default-severity="mandatory" data-rule="localhost-http-00001" onclick="toggleRow('row-cloudreadiness-1', this)" style="cursor:pointer;">
+      <td style="white-space:normal;"><div class="issue-title-cell"><button class="expand-btn" id="btn-row-cloudreadiness-1">&#x276F;</button> Local HTTP Calls</div></td>
+      <td class="crit-cell"><span class="crit-label"><span class="crit-square crit-square-mandatory"></span>Mandatory</span></td>
+      <td class="sp-cell">3</td>
+    </tr>
+    <tr class="detail-row" id="row-cloudreadiness-1" style="display:none;">
+      <td colspan="3">
+        <div class="detail-content">
+          <div class="file-list">
+            <table><colgroup><col style="width:70%"/><col style="width:30%"/></colgroup>
+            <thead><tr><th>File</th><th>Position</th></tr></thead><tbody>
+            <tr><td><span class="file-path" title="src/test/java/org/springframework/samples/petclinic/PetClinicIntegrationTests.java">src/test/java/org/springframework/samples/petclinic/PetClinicIntegrationTests.java</span></td><td><span class="position">Line 53</span></td></tr>
+            </tbody></table>
+          </div>
+          <div class="explanation-panel">
+            <h4>Explanation</h4>
+            <div><p>The app is trying to access local resource by HTTP, please try to migrate the resource to cloud</p></div>
+          </div>
+        </div>
+      </td>
+    </tr>
+    <tr class="issue-row" data-criticality="mandatory" data-targets='{&quot;azure-aks&quot;:{&quot;effort&quot;:3,&quot;severity&quot;:&quot;mandatory&quot;},&quot;azure-appservice&quot;:{&quot;effort&quot;:3,&quot;severity&quot;:&quot;mandatory&quot;},&quot;azure-container-apps&quot;:{&quot;effort&quot;:3,&quot;severity&quot;:&quot;mandatory&quot;}}' data-default-effort="3" data-default-severity="mandatory" data-rule="unsecure-network-protocol-00000" onclick="toggleRow('row-cloudreadiness-2', this)" style="cursor:pointer;">
+      <td style="white-space:normal;"><div class="issue-title-cell"><button class="expand-btn" id="btn-row-cloudreadiness-2">&#x276F;</button> Use of unsecured network protocols or URI libraries</div></td>
+      <td class="crit-cell"><span class="crit-label"><span class="crit-square crit-square-mandatory"></span>Mandatory</span></td>
+      <td class="sp-cell">3</td>
+    </tr>
+    <tr class="detail-row" id="row-cloudreadiness-2" style="display:none;">
+      <td colspan="3">
+        <div class="detail-content">
+          <div class="file-list">
+            <table><colgroup><col style="width:70%"/><col style="width:30%"/></colgroup>
+            <thead><tr><th>File</th><th>Position</th></tr></thead><tbody>
+            <tr><td><span class="file-path" title="src/test/java/org/springframework/samples/petclinic/PetClinicIntegrationTests.java">src/test/java/org/springframework/samples/petclinic/PetClinicIntegrationTests.java</span></td><td><span class="position">Line 53</span></td></tr>
+            </tbody></table>
+          </div>
+          <div class="explanation-panel">
+            <h4>Explanation</h4>
+            <div><p>Using secured protocols such as HTTPS and SFTP (over HTTP and FTP) should now be the norm as applications are more and more exposed and interconnected. <br/>This CloudReady patterns looks for unescured URI in the source code or deprecated URI libraries. <br/>Ideally, URLs should be replaced in your source code by secured protocols HTTPS and SFTP (and ensure the infrastructure implements these protocols for the resources your application calls, uses or references).</p></div>
+          </div>
+        </div>
+      </td>
+    </tr>
+    <tr class="issue-row" data-criticality="potential" data-targets='{&quot;azure-aks&quot;:{&quot;effort&quot;:5,&quot;severity&quot;:&quot;potential&quot;},&quot;azure-appservice&quot;:{&quot;effort&quot;:5,&quot;severity&quot;:&quot;potential&quot;},&quot;azure-container-apps&quot;:{&quot;effort&quot;:5,&quot;severity&quot;:&quot;potential&quot;}}' data-default-effort="5" data-default-severity="potential" data-rule="azure-database-mysql-01000" onclick="toggleRow('row-cloudreadiness-3', this)" style="cursor:pointer;">
+      <td style="white-space:normal;"><div class="issue-title-cell"><button class="expand-btn" id="btn-row-cloudreadiness-3">&#x276F;</button> MySQL database found</div></td>
+      <td class="crit-cell"><span class="crit-label"><span class="crit-square crit-square-potential"></span>Potential</span></td>
+      <td class="sp-cell">5</td>
+    </tr>
+    <tr class="detail-row" id="row-cloudreadiness-3" style="display:none;">
+      <td colspan="3">
+        <div class="detail-content">
+          <div class="file-list">
+            <table><colgroup><col style="width:70%"/><col style="width:30%"/></colgroup>
+            <thead><tr><th>File</th><th>Position</th></tr></thead><tbody>
+            <tr><td><span class="file-path" title="build.gradle">build.gradle</span></td><td><span class="position">Line 33</span></td></tr>
+            <tr><td><span class="file-path" title="docker-compose.yml">docker-compose.yml</span></td><td><span class="position">Line 13</span></td></tr>
+            <tr><td><span class="file-path" title="k8s/compose/docker-compose-k8s.yml">k8s/compose/docker-compose-k8s.yml</span></td><td><span class="position">Line 10</span></td></tr>
+            <tr><td><span class="file-path" title="k8s/petclinic-deployment.yaml">k8s/petclinic-deployment.yaml</span></td><td><span class="position">Line 31</span></td></tr>
+            <tr><td><span class="file-path" title="src/main/resources/application-mysql.properties">src/main/resources/application-mysql.properties</span></td><td><span class="position">Line 3</span></td></tr>
+            </tbody></table>
+          </div>
+          <div class="explanation-panel">
+            <h4>Explanation</h4>
+            <div><p>To migrate a Java application that uses a MySQL database to Azure, you can follow these recommendations:</p><p> * Use a managed <strong>Azure Database for MySQL</strong>: For that create a managed MySQL database in Azure and choose the appropriate pricing tier based on your application&#x27;s requirements for performance, storage, and availability.</p><p> * <strong>Migrate</strong> the existing MySQL database: For that you can use the Azure Database Migration Service (DMS) to perform an online migration with minimal downtime.</p><p> * Update the application&#x27;s <strong>database connection</strong> details: Modify the Java application&#x27;s configuration to point to the newly provisioned Azure Database for MySQL. Update the connection string, hostname, port, username, and password information accordingly.</p><p> * Enable <strong>monitoring and diagnostics</strong>: Utilize Azure Monitor to gain insights into the performance and health of your Java application and the underlying MySQL database. Set up metrics, alerts, and log analytics to proactively identify and resolve issues.</p><p> * Implement <strong>security</strong> measures: Apply security best practices to protect your Java application and the MySQL database. This includes implementing authentication and authorization mechanisms with passwordless connections and leveraging Microsoft Defender for Cloud for threat detection and vulnerability assessments.</p><p> * <strong>Backup</strong> your data: Azure Database for MySQL provides automated backups by default. You can configure the retention period for backups based on your requirements. You can also enable geo-redundant backups, if needed, to enhance data durability and availability.</p></div>
+          </div>
+        </div>
+      </td>
+    </tr>
+    <tr class="issue-row" data-criticality="potential" data-targets='{&quot;azure-aks&quot;:{&quot;effort&quot;:5,&quot;severity&quot;:&quot;potential&quot;},&quot;azure-appservice&quot;:{&quot;effort&quot;:5,&quot;severity&quot;:&quot;potential&quot;},&quot;azure-container-apps&quot;:{&quot;effort&quot;:5,&quot;severity&quot;:&quot;potential&quot;}}' data-default-effort="5" data-default-severity="potential" data-rule="azure-database-postgresql-02000" onclick="toggleRow('row-cloudreadiness-4', this)" style="cursor:pointer;">
+      <td style="white-space:normal;"><div class="issue-title-cell"><button class="expand-btn" id="btn-row-cloudreadiness-4">&#x276F;</button> PostgreSQL database found</div></td>
+      <td class="crit-cell"><span class="crit-label"><span class="crit-square crit-square-potential"></span>Potential</span></td>
+      <td class="sp-cell">5</td>
+    </tr>
+    <tr class="detail-row" id="row-cloudreadiness-4" style="display:none;">
+      <td colspan="3">
+        <div class="detail-content">
+          <div class="file-list">
+            <table><colgroup><col style="width:70%"/><col style="width:30%"/></colgroup>
+            <thead><tr><th>File</th><th>Position</th></tr></thead><tbody>
+            <tr><td><span class="file-path" title="build.gradle">build.gradle</span></td><td><span class="position">Line 34</span></td></tr>
+            <tr><td><span class="file-path" title="src/main/resources/application-postgres.properties">src/main/resources/application-postgres.properties</span></td><td><span class="position">Line 2</span></td></tr>
+            </tbody></table>
+          </div>
+          <div class="explanation-panel">
+            <h4>Explanation</h4>
+            <div><p>To migrate a Java application that uses a PostgreSQL database to Azure, you can follow these recommendations:</p><p> * Use a managed <strong>Azure Database for PostgreSQL Flexible Server</strong>: For that create a managed PostgreSQL Flexible Server database in Azure and choose the appropriate pricing tier based on your application&#x27;s requirements for performance, storage, and availability.</p><p> * <strong>Migrate</strong> the existing PostgreSQL database: For that you can use the Azure Database Migration Service (DMS) to perform an online migration with minimal downtime.</p><p> * Update the application&#x27;s <strong>database connection</strong> details: Modify the Java application&#x27;s configuration to point to the newly provisioned Azure Database for PostgreSQL. Update the connection string, hostname, port, username, and password information accordingly.</p><p> * Enable <strong>monitoring and diagnostics</strong>: Utilize Azure Monitor to gain insights into the performance and health of your Java application and the underlying PostgreSQL database. Set up metrics, alerts, and log analytics to proactively identify and resolve issues.</p><p> * Implement <strong>security</strong> measures: Apply security best practices to protect your Java application and the PostgreSQL database. This includes implementing authentication and authorization mechanisms with passwordless connections and leveraging Microsoft Defender for Cloud for threat detection and vulnerability assessments.</p><p> * <strong>Backup</strong> your data: Azure Database for PostgreSQL provides automated backups by default. You can configure the retention period for backups based on your requirements. You can also enable geo-redundant backups, if needed, to enhance data durability and availability.</p></div>
+          </div>
+        </div>
+      </td>
+    </tr>
+    <tr class="issue-row" data-criticality="potential" data-targets='{&quot;azure-aks&quot;:{&quot;effort&quot;:3,&quot;severity&quot;:&quot;potential&quot;},&quot;azure-appservice&quot;:{&quot;effort&quot;:3,&quot;severity&quot;:&quot;potential&quot;},&quot;azure-container-apps&quot;:{&quot;effort&quot;:3,&quot;severity&quot;:&quot;potential&quot;}}' data-default-effort="3" data-default-severity="potential" data-rule="azure-password-01000" onclick="toggleRow('row-cloudreadiness-5', this)" style="cursor:pointer;">
+      <td style="white-space:normal;"><div class="issue-title-cell"><button class="expand-btn" id="btn-row-cloudreadiness-5">&#x276F;</button> Password found in configuration file</div></td>
+      <td class="crit-cell"><span class="crit-label"><span class="crit-square crit-square-potential"></span>Potential</span></td>
+      <td class="sp-cell">3</td>
+    </tr>
+    <tr class="detail-row" id="row-cloudreadiness-5" style="display:none;">
+      <td colspan="3">
+        <div class="detail-content">
+          <div class="file-list">
+            <table><colgroup><col style="width:70%"/><col style="width:30%"/></colgroup>
+            <thead><tr><th>File</th><th>Position</th></tr></thead><tbody>
+            <tr><td><span class="file-path" title="src/main/resources/application-mysql.properties">src/main/resources/application-mysql.properties</span></td><td><span class="position">Line 5</span></td></tr>
+            <tr><td><span class="file-path" title="src/main/resources/application-postgres.properties">src/main/resources/application-postgres.properties</span></td><td><span class="position">Line 4</span></td></tr>
+            </tbody></table>
+          </div>
+          <div class="explanation-panel">
+            <h4>Explanation</h4>
+            <div><p>Using clear passwords in property files is a security risk, as they can be easily compromised if the files are accessed by unauthorized individuals. To enhance the security of your application, it is recommended to employ secure credential management practices.</p><p> * <strong>Azure Key Vault</strong>: Utilize Azure Key Vault to securely store and manage your application&#x27;s passwords and other sensitive credentials. Azure Key Vault provides a centralized and highly secure location for storing secrets, keys, and certificates.</p><p> * <strong>Passwordless connections</strong>: You can provide an additional layer of security and convenience for accessing resources in Azure by eliminating the need for passwords. This way you can reduce the risk of password-related vulnerabilities, such as weak passwords or password theft.</p></div>
+          </div>
+        </div>
+      </td>
+    </tr>
+    <tr class="issue-row" data-criticality="optional" data-targets='{&quot;azure-aks&quot;:{&quot;effort&quot;:3,&quot;severity&quot;:&quot;optional&quot;},&quot;azure-appservice&quot;:{&quot;effort&quot;:3,&quot;severity&quot;:&quot;optional&quot;},&quot;azure-container-apps&quot;:{&quot;effort&quot;:3,&quot;severity&quot;:&quot;optional&quot;}}' data-default-effort="3" data-default-severity="optional" data-rule="hardcoded-urls-00001" onclick="toggleRow('row-cloudreadiness-6', this)" style="cursor:pointer;">
+      <td style="white-space:normal;"><div class="issue-title-cell"><button class="expand-btn" id="btn-row-cloudreadiness-6">&#x276F;</button> Avoid using hardcoded URLs (HTTP protocol) in source code</div></td>
+      <td class="crit-cell"><span class="crit-label"><span class="crit-square crit-square-optional"></span>Optional</span></td>
+      <td class="sp-cell">3</td>
+    </tr>
+    <tr class="detail-row" id="row-cloudreadiness-6" style="display:none;">
+      <td colspan="3">
+        <div class="detail-content">
+          <div class="file-list">
+            <table><colgroup><col style="width:70%"/><col style="width:30%"/></colgroup>
+            <thead><tr><th>File</th><th>Position</th></tr></thead><tbody>
+            <tr><td><span class="file-path" title="src/test/java/org/springframework/samples/petclinic/PetClinicIntegrationTests.java">src/test/java/org/springframework/samples/petclinic/PetClinicIntegrationTests.java</span></td><td><span class="position">Line 53</span></td></tr>
+            </tbody></table>
+          </div>
+          <div class="explanation-panel">
+            <h4>Explanation</h4>
+            <div><p>This patterns verifies in source code and configuration files the presence of hardcoded URLs using the HTTP protocol (HTTP/HTTPS). This URL would need to be replaced by the new resource&#x27;s URL during the Cloud migration, if any change occured.</p></div>
+          </div>
+        </div>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+</div>
+<div class="issue-section" data-domain="java-upgrade">
+  <h2>Java Upgrade</h2>
+  <table class="issue-table">
+    <colgroup><col class="col-issue"/><col class="col-criticality"/><col class="col-storypoint"/></colgroup>
+    <thead><tr><th>Issue Category</th><th>Criticality</th><th>Story Point</th></tr></thead>
+    <tbody>
+    <tr class="issue-row" data-criticality="mandatory" data-targets='{&quot;azure-aks&quot;:{&quot;effort&quot;:8,&quot;severity&quot;:&quot;mandatory&quot;},&quot;azure-appservice&quot;:{&quot;effort&quot;:8,&quot;severity&quot;:&quot;mandatory&quot;},&quot;azure-container-apps&quot;:{&quot;effort&quot;:8,&quot;severity&quot;:&quot;mandatory&quot;}}' data-default-effort="8" data-default-severity="mandatory" data-rule="azure-java-version-01000" onclick="toggleRow('row-javaupgrade-0', this)" style="cursor:pointer;">
+      <td style="white-space:normal;"><div class="issue-title-cell"><button class="expand-btn" id="btn-row-javaupgrade-0">&#x276F;</button> Java Version Has Reached the End of Support</div></td>
+      <td class="crit-cell"><span class="crit-label"><span class="crit-square crit-square-mandatory"></span>Mandatory</span></td>
+      <td class="sp-cell">8</td>
+    </tr>
+    <tr class="detail-row" id="row-javaupgrade-0" style="display:none;">
+      <td colspan="3">
+        <div class="detail-content">
+          <div class="file-list">
+            <table><colgroup><col style="width:70%"/><col style="width:30%"/></colgroup>
+            <thead><tr><th>File</th><th>Position</th></tr></thead><tbody>
+            <tr><td><span class="file-path" title="pom.xml">pom.xml</span></td><td><span class="position">Line 18</span></td></tr>
+            </tbody></table>
+          </div>
+          <div class="explanation-panel">
+            <h4>Explanation</h4>
+            <div><p>The application is using a Java version that has reached the end of support. It is strongly recommended to plan and execute a migration strategy to upgrade your application to a supported Java version.<br/>Supported Java versions receive long-term support (LTS) from the Java community, including bug fixes and updates. Migrating to a supported version provides you with a stable and well-maintained platform for your application.</p></div>
+          </div>
+        </div>
+      </td>
+    </tr>
+    <tr class="issue-row" data-criticality="optional" data-targets='{&quot;azure-aks&quot;:{&quot;effort&quot;:8,&quot;severity&quot;:&quot;optional&quot;},&quot;azure-appservice&quot;:{&quot;effort&quot;:8,&quot;severity&quot;:&quot;optional&quot;},&quot;azure-container-apps&quot;:{&quot;effort&quot;:8,&quot;severity&quot;:&quot;optional&quot;}}' data-default-effort="8" data-default-severity="optional" data-rule="azure-java-version-02000" onclick="toggleRow('row-javaupgrade-1', this)" style="cursor:pointer;">
+      <td style="white-space:normal;"><div class="issue-title-cell"><button class="expand-btn" id="btn-row-javaupgrade-1">&#x276F;</button> Java Version is not the latest LTS</div></td>
+      <td class="crit-cell"><span class="crit-label"><span class="crit-square crit-square-optional"></span>Optional</span></td>
+      <td class="sp-cell">8</td>
+    </tr>
+    <tr class="detail-row" id="row-javaupgrade-1" style="display:none;">
+      <td colspan="3">
+        <div class="detail-content">
+          <div class="file-list">
+            <table><colgroup><col style="width:70%"/><col style="width:30%"/></colgroup>
+            <thead><tr><th>File</th><th>Position</th></tr></thead><tbody>
+            <tr><td><span class="file-path" title="build.gradle">build.gradle</span></td><td><span class="position">Line 11</span></td></tr>
+            </tbody></table>
+          </div>
+          <div class="explanation-panel">
+            <h4>Explanation</h4>
+            <div><p>The application is not using the latest LTS Java version. It is recommended to consider upgrading to the latest LTS version to take advantage of the newest language features, performance improvements, and extended support timelines.<br/>Upgrading to the latest LTS version ensures your application benefits from the most recent security enhancements and a longer support lifecycle.</p></div>
+          </div>
+        </div>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+</div>
+</div><!-- #tab-issues -->
+<div id="tab-arch" class="tab-panel">
+  <div class="fact-content"><h1 id="architecture-diagram">Architecture Diagram</h1>
+<p>Spring PetClinic is a single-module Spring Boot 2.7.1 web application built on Java 8, demonstrating a classic layered MVC architecture with Thymeleaf views, Spring Data JPA repositories, and pluggable relational database backends (H2, MySQL, PostgreSQL).</p>
+<h2 id="application-architecture">Application Architecture</h2>
+<div class="mermaid">
+flowchart TD
+    subgraph Client["Client Layer"]
+        Browser["Web Browser"]
+    end
+    subgraph App["Application Layer - Spring Boot 2.7.1"]
+        Web["Spring MVC Controllers"]
+        View["Thymeleaf Templates"]
+        Cache["JCache / Ehcache"]
+        Actuator["Spring Boot Actuator"]
+    end
+    subgraph Data["Data Layer"]
+        JPA["Spring Data JPA (Hibernate)"]
+        H2[("H2 Database (default)")]
+        MySQL[("MySQL 8")]
+        Postgres[("PostgreSQL")]
+    end
+    subgraph Infra["Infrastructure"]
+        DevTools["Spring Boot DevTools"]
+    end
+
+    Browser -->|"HTTP requests"| Web
+    Web -->|"renders"| View
+    Web -->|"CRUD via repositories"| JPA
+    JPA -->|"SQL (default)"| H2
+    JPA -->|"SQL (mysql profile)"| MySQL
+    JPA -->|"SQL (postgres profile)"| Postgres
+    Web -->|"cached vet list"| Cache
+    Actuator -->|"exposes /actuator/*"| Browser
+</div>
+<h3 id="technology-stack-summary">Technology Stack Summary</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>Layer</th><th>Technology</th><th>Version</th><th>Purpose</th>
+</tr></thead><tbody>
+<tr><td>Presentation</td><td>Spring MVC</td><td>5.3.x (via Boot 2.7.1)</td><td>HTTP request handling and routing</td></tr>
+<tr><td>Presentation</td><td>Thymeleaf</td><td>3.0.x</td><td>Server-side HTML template rendering</td></tr>
+<tr><td>Presentation</td><td>Bootstrap</td><td>5.1.3</td><td>Responsive UI styling (WebJar)</td></tr>
+<tr><td>Presentation</td><td>Font Awesome</td><td>4.7.0</td><td>UI icons (WebJar)</td></tr>
+<tr><td>Business Logic</td><td>Spring Boot</td><td>2.7.1</td><td>Application framework and auto-configuration</td></tr>
+<tr><td>Data Access</td><td>Spring Data JPA</td><td>2.7.x</td><td>Repository abstraction over JPA/Hibernate</td></tr>
+<tr><td>Data Storage</td><td>H2</td><td>2.x</td><td>In-memory database (default profile)</td></tr>
+<tr><td>Data Storage</td><td>MySQL</td><td>8.x</td><td>Relational database (mysql profile)</td></tr>
+<tr><td>Data Storage</td><td>PostgreSQL</td><td>14.x</td><td>Relational database (postgres profile)</td></tr>
+<tr><td>Caching</td><td>Ehcache + JCache API</td><td>3.x</td><td>Vet list caching</td></tr>
+<tr><td>Monitoring</td><td>Spring Boot Actuator</td><td>2.7.1</td><td>Health checks and metrics endpoints</td></tr>
+<tr><td>Build</td><td>Maven</td><td>3.x</td><td>Build, dependency management, and packaging</td></tr>
+</tbody></table></div>
+<h3 id="data-storage-external-services">Data Storage & External Services</h3>
+<p>The application uses a relational database for all persistent data. By default, H2 runs in embedded mode using DDL/DML scripts in <code>src/main/resources/db/h2/</code>. Profiles <code>mysql</code> and <code>postgres</code> switch to external MySQL 8 or PostgreSQL databases respectively, loading their own schema and data scripts. Vet data is cached in-process using Ehcache 3 through the standard JCache (JSR-107) API to avoid repeated database reads for a relatively static dataset. No external third-party services (email, messaging, object storage) are used.</p>
+<h3 id="key-architectural-decisions">Key Architectural Decisions</h3>
+<ul>
+<li><strong>Repository pattern via Spring Data JPA</strong>: <code>OwnerRepository</code> and <code>VetRepository</code> extend <code>Repository<T, ID></code> directly, keeping the data access API minimal and JPQL-driven rather than using the broader <code>JpaRepository</code> interface.</li>
+<li><strong>Profile-driven database selection</strong>: The active Spring profile (<code>mysql</code>, <code>postgres</code>, or default H2) controls which <code>application-{profile}.properties</code> and SQL scripts are loaded, enabling zero-code database switching.</li>
+<li><strong>JCache-backed caching</strong>: Vet list results are cached using <code>@Cacheable("vets")</code> with a JCache <code>MutableConfiguration</code>, providing pluggable cache provider support through the Ehcache 3 implementation.</li>
+</ul>
+<h2 id="component-relationships">Component Relationships</h2>
+<div class="mermaid">
+flowchart LR
+    subgraph Presentation["Presentation Layer"]
+        WelcomeCtrl["WelcomeController"]
+        OwnerCtrl["OwnerController"]
+        PetCtrl["PetController"]
+        VisitCtrl["VisitController"]
+        VetCtrl["VetController"]
+        CrashCtrl["CrashController"]
+    end
+    subgraph Domain["Domain / Model"]
+        OwnerEntity["Owner"]
+        PetEntity["Pet"]
+        PetTypeEntity["PetType"]
+        VisitEntity["Visit"]
+        VetEntity["Vet"]
+        SpecialtyEntity["Specialty"]
+    end
+    subgraph DataAccess["Data Access Layer"]
+        OwnerRepo["OwnerRepository"]
+        VetRepo["VetRepository"]
+    end
+    subgraph Infrastructure["Infrastructure"]
+        CacheConfig["CacheConfiguration"]
+        PetValidator["PetValidator"]
+        PetTypeFormatter["PetTypeFormatter"]
+    end
+
+    OwnerCtrl -->|"queries / saves"| OwnerRepo
+    PetCtrl -->|"queries / saves via owner"| OwnerRepo
+    VisitCtrl -->|"queries / saves via owner"| OwnerRepo
+    VetCtrl -->|"queries (cached)"| VetRepo
+    OwnerRepo -->|"manages"| OwnerEntity
+    OwnerRepo -->|"manages"| PetTypeEntity
+    VetRepo -->|"manages"| VetEntity
+    OwnerEntity -->|"has many"| PetEntity
+    PetEntity -->|"has many"| VisitEntity
+    PetEntity -->|"typed by"| PetTypeEntity
+    VetEntity -->|"has many"| SpecialtyEntity
+    CacheConfig -.->|"configures cache for"| VetRepo
+    PetValidator -.->|"validates"| PetCtrl
+    PetTypeFormatter -.->|"formats"| PetCtrl
+</div>
+<h3 id="component-inventory">Component Inventory</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>Component</th><th>Layer</th><th>Type</th><th>Responsibility</th>
+</tr></thead><tbody>
+<tr><td>WelcomeController</td><td>Presentation</td><td>Spring MVC Controller</td><td>Renders the application home/welcome page</td></tr>
+<tr><td>OwnerController</td><td>Presentation</td><td>Spring MVC Controller</td><td>Owner CRUD: create, find, update, display (paginated)</td></tr>
+<tr><td>PetController</td><td>Presentation</td><td>Spring MVC Controller</td><td>Pet CRUD: create and update pets on an owner</td></tr>
+<tr><td>VisitController</td><td>Presentation</td><td>Spring MVC Controller</td><td>Visit CRUD: create and list visits for a pet</td></tr>
+<tr><td>VetController</td><td>Presentation</td><td>Spring MVC Controller</td><td>Vet listing (HTML and JSON/XML endpoints, paginated)</td></tr>
+<tr><td>CrashController</td><td>Presentation</td><td>Spring MVC Controller</td><td>Deliberate error endpoint for testing error handling</td></tr>
+<tr><td>OwnerRepository</td><td>Data Access</td><td>Spring Data Repository</td><td>Owner + PetType JPA queries and persistence</td></tr>
+<tr><td>VetRepository</td><td>Data Access</td><td>Spring Data Repository</td><td>Vet JPA queries with caching support</td></tr>
+<tr><td>Owner</td><td>Domain</td><td>JPA Entity</td><td>Pet owner with address and contact information</td></tr>
+<tr><td>Pet</td><td>Domain</td><td>JPA Entity</td><td>Pet belonging to an owner, with visits</td></tr>
+<tr><td>PetType</td><td>Domain</td><td>JPA Entity</td><td>Pet type lookup (dog, cat, etc.)</td></tr>
+<tr><td>Visit</td><td>Domain</td><td>JPA Entity</td><td>Veterinary visit record for a pet</td></tr>
+<tr><td>Vet</td><td>Domain</td><td>JPA Entity</td><td>Veterinarian with specialties</td></tr>
+<tr><td>Specialty</td><td>Domain</td><td>JPA Entity</td><td>Vet specialty (surgery, dentistry, etc.)</td></tr>
+<tr><td>CacheConfiguration</td><td>Infrastructure</td><td>Spring Configuration</td><td>Registers and configures JCache "vets" cache via Ehcache</td></tr>
+<tr><td>PetValidator</td><td>Infrastructure</td><td>Spring Validator</td><td>Validates pet name and type on form submission</td></tr>
+<tr><td>PetTypeFormatter</td><td>Infrastructure</td><td>Spring Formatter</td><td>Converts PetType name strings to/from PetType entities</td></tr>
+</tbody></table></div></div>
+</div>
+<div id="tab-api" class="tab-panel">
+  <div class="fact-content"><h1 id="api-service-communication-contracts">API & Service Communication Contracts</h1>
+<p>Spring PetClinic exposes 16 HTTP endpoints across 5 Spring MVC controllers — all server-rendered HTML except for one JSON/XML REST endpoint on the Vet resource — with no inter-service communication, message broker, API gateway, or authentication layer.</p>
+<h2 id="service-catalog">Service Catalog</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Service</th><th>Port</th><th>Category</th><th>Purpose</th>
+</tr></thead><tbody>
+<tr><td>spring-petclinic</td><td>8080 (default)</td><td>Business</td><td>Single deployable Spring Boot application managing owners, pets, visits, and vets</td></tr>
+</tbody></table></div>
+<h2 id="api-endpoints-inventory">API Endpoints Inventory</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Controller</th><th>Method</th><th>Path</th><th>Request Type</th><th>Response Type</th>
+</tr></thead><tbody>
+<tr><td>WelcomeController</td><td>GET</td><td><code>/</code></td><td>—</td><td>HTML (welcome view)</td></tr>
+<tr><td>OwnerController</td><td>GET</td><td><code>/owners/new</code></td><td>—</td><td>HTML (createOrUpdateOwnerForm)</td></tr>
+<tr><td>OwnerController</td><td>POST</td><td><code>/owners/new</code></td><td>Owner (form body)</td><td>Redirect to <code>/owners/{id}</code> or form with errors</td></tr>
+<tr><td>OwnerController</td><td>GET</td><td><code>/owners/find</code></td><td>—</td><td>HTML (findOwners)</td></tr>
+<tr><td>OwnerController</td><td>GET</td><td><code>/owners</code></td><td><code>?page=N</code>, <code>lastName</code> query param</td><td>HTML (ownersList, paginated)</td></tr>
+<tr><td>OwnerController</td><td>GET</td><td><code>/owners/{ownerId}</code></td><td>Path: ownerId</td><td>HTML (ownerDetails)</td></tr>
+<tr><td>OwnerController</td><td>GET</td><td><code>/owners/{ownerId}/edit</code></td><td>Path: ownerId</td><td>HTML (createOrUpdateOwnerForm)</td></tr>
+<tr><td>OwnerController</td><td>POST</td><td><code>/owners/{ownerId}/edit</code></td><td>Owner (form body), Path: ownerId</td><td>Redirect to <code>/owners/{ownerId}</code> or form with errors</td></tr>
+<tr><td>PetController</td><td>GET</td><td><code>/owners/{ownerId}/pets/new</code></td><td>Path: ownerId</td><td>HTML (createOrUpdatePetForm)</td></tr>
+<tr><td>PetController</td><td>POST</td><td><code>/owners/{ownerId}/pets/new</code></td><td>Pet (form body), Path: ownerId</td><td>Redirect to <code>/owners/{ownerId}</code> or form with errors</td></tr>
+<tr><td>PetController</td><td>GET</td><td><code>/owners/{ownerId}/pets/{petId}/edit</code></td><td>Path: ownerId, petId</td><td>HTML (createOrUpdatePetForm)</td></tr>
+<tr><td>PetController</td><td>POST</td><td><code>/owners/{ownerId}/pets/{petId}/edit</code></td><td>Pet (form body), Path: ownerId, petId</td><td>Redirect to <code>/owners/{ownerId}</code> or form with errors</td></tr>
+<tr><td>VisitController</td><td>GET</td><td><code>/owners/{ownerId}/pets/{petId}/visits/new</code></td><td>Path: ownerId, petId</td><td>HTML (createOrUpdateVisitForm)</td></tr>
+<tr><td>VisitController</td><td>POST</td><td><code>/owners/{ownerId}/pets/{petId}/visits/new</code></td><td>Visit (form body), Path: ownerId, petId</td><td>Redirect to <code>/owners/{ownerId}</code> or form with errors</td></tr>
+<tr><td>VetController</td><td>GET</td><td><code>/vets.html</code></td><td><code>?page=N</code> query param</td><td>HTML (vetList, paginated)</td></tr>
+<tr><td>VetController</td><td>GET</td><td><code>/vets</code></td><td>—</td><td>JSON or XML (<code>Vets</code> wrapper)</td></tr>
+<tr><td>CrashController</td><td>GET</td><td><code>/oups</code></td><td>—</td><td>HTTP 500 error page (intentional exception)</td></tr>
+</tbody></table></div>
+<h2 id="management-observability-endpoints">Management & Observability Endpoints</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Service</th><th>Endpoint</th><th>Notes</th>
+</tr></thead><tbody>
+<tr><td>spring-petclinic</td><td><code>/actuator</code></td><td>Discovery index for all enabled actuator endpoints</td></tr>
+<tr><td>spring-petclinic</td><td><code>/actuator/health</code></td><td>Application health status</td></tr>
+<tr><td>spring-petclinic</td><td><code>/actuator/info</code></td><td>Build info (from <code>build-info.properties</code> and <code>git.properties</code>)</td></tr>
+<tr><td>spring-petclinic</td><td><code>/actuator/metrics</code></td><td>Micrometer metrics (all metrics exposed)</td></tr>
+<tr><td>spring-petclinic</td><td><code>/actuator/env</code></td><td>Full environment properties</td></tr>
+<tr><td>spring-petclinic</td><td><code>/actuator/beans</code></td><td>Spring bean definitions</td></tr>
+<tr><td>spring-petclinic</td><td><code>/actuator/heapdump</code></td><td>JVM heap dump download</td></tr>
+<tr><td>spring-petclinic</td><td><code>/actuator/threaddump</code></td><td>JVM thread dump</td></tr>
+<tr><td>spring-petclinic</td><td><code>/actuator/loggers</code></td><td>Logger levels (read/write)</td></tr>
+</tbody></table></div>
+<p>All Actuator endpoints are enabled via <code>management.endpoints.web.exposure.include=*</code>. No custom <code>@Timed</code> or Micrometer metric registrations are present in application code; metrics are provided by Spring Boot auto-configuration (JVM, Tomcat, HTTP request metrics).</p>
+<h2 id="dtos-contracts">DTOs & Contracts</h2>
+<p>The application uses JPA domain entities directly as MVC model objects — there are no separate DTO classes or request/response wrappers for the HTML endpoints. The single REST endpoint (<code>GET /vets</code>) returns a <code>Vets</code> wrapper object (containing a list of <code>Vet</code> entities) serialized by Jackson to JSON or JAXB to XML based on the <code>Accept</code> header.</p>
+<div class="table-wrap"><table><thead><tr>
+<th>Class</th><th>Role</th><th>Immutable</th><th>Notes</th>
+</tr></thead><tbody>
+<tr><td><code>Owner</code></td><td>Form request body + MVC model</td><td>No</td><td>Used as <code>@ModelAttribute</code> in create/update forms</td></tr>
+<tr><td><code>Pet</code></td><td>Form request body + MVC model</td><td>No</td><td>Used as <code>@ModelAttribute</code>; validated by <code>PetValidator</code></td></tr>
+<tr><td><code>Visit</code></td><td>Form request body + MVC model</td><td>No</td><td>Used as <code>@ModelAttribute</code> in visit form</td></tr>
+<tr><td><code>Vet</code></td><td>REST response element</td><td>No</td><td>Serialized inside <code>Vets</code> wrapper</td></tr>
+<tr><td><code>Vets</code></td><td>REST response wrapper (<code>GET /vets</code>)</td><td>No</td><td>JAXB-annotated list wrapper; also JSON-serializable</td></tr>
+<tr><td><code>PetType</code></td><td>Query parameter (formatter)</td><td>No</td><td>Converted from String by <code>PetTypeFormatter</code></td></tr>
+</tbody></table></div>
+<p>No OpenAPI/Swagger specification, protobuf schemas, or GraphQL schemas are present. Jackson handles JSON serialization (via Spring Boot auto-configuration); JAXB handles XML serialization for the <code>Vets</code> class.</p>
+<h2 id="communication-patterns">Communication Patterns</h2>
+<p><strong>Synchronous only</strong>: All communication is synchronous HTTP. There are no asynchronous messaging patterns, message brokers (Kafka, RabbitMQ), event-driven patterns, or reactive streams in the application.</p>
+<p><strong>Single-service</strong>: The application is a monolith with no inter-service REST calls, Feign clients, WebClient, or RestTemplate usage. All data access is through JPA repositories within the same JVM process.</p>
+<p><strong>No resilience patterns</strong>: No circuit breaker (Resilience4j, Spring Retry), retry policies, bulkhead patterns, or timeout configuration are present. The application relies on the default Tomcat thread pool and JPA connection pool timeouts.</p>
+<p><strong>No service discovery</strong>: The application registers with no service discovery system (no Eureka, Consul, or Kubernetes-based service registration). It is reached directly by hostname/port.</p>
+<p><strong>No API gateway</strong>: There is no gateway, BFF (backend-for-frontend), or API aggregation layer. The single deployed instance serves both UI and the <code>/vets</code> REST endpoint.</p>
+<p><strong>Security posture</strong>: No authentication or TLS is configured. All endpoints — including Actuator endpoints that expose environment variables, heap dumps, and bean definitions — are publicly accessible with no authorization checks. There is no Spring Security dependency, no JWT/OAuth2 integration, and no HTTPS configuration.</p>
+<h2 id="service-technology-matrix">Service Technology Matrix</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Service</th><th>Web Framework</th><th>Data Access</th><th>Discovery</th><th>Gateway</th><th>Actuator</th><th>Cache</th><th>Metrics</th>
+</tr></thead><tbody>
+<tr><td>spring-petclinic</td><td>Spring MVC (Servlet/Tomcat)</td><td>Spring Data JPA (Hibernate)</td><td>None</td><td>None</td><td>All endpoints exposed</td><td>Ehcache 3 (JCache)</td><td>Micrometer (auto)</td></tr>
+</tbody></table></div>
+<h2 id="service-communication-sequence">Service Communication Sequence</h2>
+<div class="mermaid">
+sequenceDiagram
+    participant Browser as "Web Browser"
+    participant OCtrl as "OwnerController"
+    participant PCtrl as "PetController"
+    participant VCtrl as "VetController"
+    participant ORepo as "OwnerRepository"
+    participant VRepo as "VetRepository"
+    participant Cache as "Ehcache (vets)"
+    participant DB as "Database (H2/MySQL/PG)"
+
+    Browser->>OCtrl: GET /owners?lastName=Smith
+    OCtrl->>ORepo: findByLastName("Smith", pageable)
+    ORepo->>DB: SELECT owner ... WHERE lastName LIKE 'Smith%'
+    DB-->>ORepo: Page of Owner
+    ORepo-->>OCtrl: Page of Owner
+    OCtrl-->>Browser: 200 HTML ownersList
+
+    Browser->>OCtrl: GET /owners/1
+    OCtrl->>ORepo: findById(1)
+    ORepo->>DB: SELECT owner ... fetch pets WHERE id=1
+    DB-->>ORepo: Owner with Pets + Visits
+    ORepo-->>OCtrl: Owner
+    OCtrl-->>Browser: 200 HTML ownerDetails
+
+    Browser->>PCtrl: POST /owners/1/pets/new
+    PCtrl->>ORepo: findById(1)
+    ORepo->>DB: SELECT owner ...
+    DB-->>ORepo: Owner
+    PCtrl->>ORepo: save(owner with new pet)
+    ORepo->>DB: INSERT pet
+    DB-->>ORepo: OK
+    ORepo-->>PCtrl: void
+    PCtrl-->>Browser: 302 Redirect /owners/1
+
+    Browser->>VCtrl: GET /vets
+    VCtrl->>Cache: lookup "vets"
+    alt Cache Hit
+        Cache-->>VCtrl: Collection of Vet
+    else Cache Miss
+        VCtrl->>VRepo: findAll()
+        VRepo->>DB: SELECT vet ...
+        DB-->>VRepo: Collection of Vet
+        VRepo-->>Cache: store "vets"
+        Cache-->>VCtrl: Collection of Vet
+    end
+    VCtrl-->>Browser: 200 JSON Vets
+</div></div>
+</div>
+<div id="tab-config" class="tab-panel">
+  <div class="fact-content"><h1 id="configuration-externalized-settings-inventory">Configuration & Externalized Settings Inventory</h1>
+<p>Spring PetClinic uses 4 <code>application*.properties</code> files as its configuration sources, 2 Maven build profiles, and 2 Spring runtime profiles (<code>mysql</code>, <code>postgres</code>), with secrets supplied exclusively via environment variables and no external config server or secret store.</p>
+<h2 id="configuration-sources">Configuration Sources</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Source</th><th>Type</th><th>Path/Location</th><th>Notes</th>
+</tr></thead><tbody>
+<tr><td>Default application properties</td><td>Spring <code>application.properties</code></td><td><code>src/main/resources/application.properties</code></td><td>Active for all profiles; sets database, JPA, Thymeleaf, Actuator, and logging defaults</td></tr>
+<tr><td>MySQL profile properties</td><td>Spring <code>application-mysql.properties</code></td><td><code>src/main/resources/application-mysql.properties</code></td><td>Activated by <code>spring.profiles.active=mysql</code>; overrides datasource URL and init mode</td></tr>
+<tr><td>PostgreSQL profile properties</td><td>Spring <code>application-postgres.properties</code></td><td><code>src/main/resources/application-postgres.properties</code></td><td>Activated by <code>spring.profiles.active=postgres</code>; overrides datasource URL and init mode</td></tr>
+<tr><td>H2 SQL init scripts</td><td>SQL scripts</td><td><code>src/main/resources/db/h2/schema.sql</code>, <code>db/h2/data.sql</code></td><td>Applied by default profile; H2-specific DDL</td></tr>
+<tr><td>MySQL SQL init scripts</td><td>SQL scripts</td><td><code>src/main/resources/db/mysql/schema.sql</code>, <code>db/mysql/data.sql</code></td><td>Applied by mysql profile</td></tr>
+<tr><td>PostgreSQL SQL init scripts</td><td>SQL scripts</td><td><code>src/main/resources/db/postgres/schema.sql</code>, <code>db/postgres/data.sql</code></td><td>Applied by postgres profile</td></tr>
+<tr><td>Docker Compose environment</td><td><code>docker-compose.yml</code> env section</td><td><code>docker-compose.yml</code></td><td>Injects <code>SERVER_PORT</code>, <code>MYSQL_URL</code> into <code>petclinic</code> service; <code>MYSQL_ROOT_PASSWORD</code>, <code>MYSQL_USER</code>, <code>MYSQL_PASSWORD</code>, <code>MYSQL_DATABASE</code> into <code>mysqlserver</code></td></tr>
+<tr><td>i18n messages</td><td>Properties bundles</td><td><code>src/main/resources/messages/messages*.properties</code></td><td>UI label translations (EN, DE, ES)</td></tr>
+</tbody></table></div>
+<p>No Spring Cloud Config Server, HashiCorp Vault, AWS AppConfig, Consul KV, or Azure App Configuration is used. All externalized settings come from OS environment variables or Docker Compose environment sections.</p>
+<h2 id="build-profiles">Build Profiles</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Profile</th><th>Activation</th><th>Purpose</th><th>Key Dependencies / Plugins Added</th>
+</tr></thead><tbody>
+<tr><td><code>css</code> (default inactive)</td><td>Manual: <code>-P css</code></td><td>Recompiles SCSS source in <code>src/main/scss/</code> into <code>src/main/resources/static/resources/css/</code></td><td>Adds <code>maven-dependency-plugin</code> (Bootstrap SCSS unpack) and <code>libsass-maven-plugin 0.2.26</code> (SCSS compilation)</td></tr>
+<tr><td><code>m2e</code></td><td>Auto: activated when Eclipse m2e property <code>m2e.version</code> is set</td><td>Suppresses Eclipse m2e lifecycle-mapping warnings for <code>maven-checkstyle-plugin</code>, <code>spring-boot-maven-plugin</code>, and <code>spring-javaformat-maven-plugin</code></td><td>Adds <code>lifecycle-mapping</code> plugin management (no additional dependencies; configuration only)</td></tr>
+</tbody></table></div>
+<h2 id="runtime-profiles">Runtime Profiles</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Profile</th><th>Activation Method</th><th>Config Files Loaded</th><th>Key Overrides</th>
+</tr></thead><tbody>
+<tr><td>default (no profile)</td><td>No <code>spring.profiles.active</code> set</td><td><code>application.properties</code> + <code>db/h2/schema.sql</code> + <code>db/h2/data.sql</code></td><td>Uses H2 in-memory database; <code>spring.sql.init.schema-locations=classpath*:db/h2/schema.sql</code></td></tr>
+<tr><td><code>mysql</code></td><td><code>spring.profiles.active=mysql</code> (or <code>-Dspring-boot.run.profiles=mysql</code>)</td><td><code>application.properties</code> + <code>application-mysql.properties</code> + <code>db/mysql/schema.sql</code> + <code>db/mysql/data.sql</code></td><td>Overrides <code>database=mysql</code>, datasource URL/credentials, <code>spring.sql.init.mode=always</code></td></tr>
+<tr><td><code>postgres</code></td><td><code>spring.profiles.active=postgres</code></td><td><code>application.properties</code> + <code>application-postgres.properties</code> + <code>db/postgres/schema.sql</code> + <code>db/postgres/data.sql</code></td><td>Overrides <code>database=postgres</code>, datasource URL/credentials, <code>spring.sql.init.mode=always</code></td></tr>
+</tbody></table></div>
+<p>Multiple profiles can be combined (e.g., <code>mysql,key-vault</code>), but no additional profile combinations are defined in the codebase.</p>
+<h2 id="properties-inventory">Properties Inventory</h2>
+<h3 id="default-application-properties">Default (<code>application.properties</code>)</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>Property Key</th><th>Default Value</th><th>Profiles</th><th>Source</th>
+</tr></thead><tbody>
+<tr><td><code>database</code></td><td><code>h2</code></td><td>default</td><td><code>application.properties</code></td></tr>
+<tr><td><code>spring.sql.init.schema-locations</code></td><td><code>classpath*:db/${database}/schema.sql</code></td><td>default</td><td><code>application.properties</code></td></tr>
+<tr><td><code>spring.sql.init.data-locations</code></td><td><code>classpath*:db/${database}/data.sql</code></td><td>default</td><td><code>application.properties</code></td></tr>
+<tr><td><code>spring.thymeleaf.mode</code></td><td><code>HTML</code></td><td>all</td><td><code>application.properties</code></td></tr>
+<tr><td><code>spring.jpa.hibernate.ddl-auto</code></td><td><code>none</code></td><td>all</td><td><code>application.properties</code></td></tr>
+<tr><td><code>spring.jpa.open-in-view</code></td><td><code>true</code></td><td>all</td><td><code>application.properties</code></td></tr>
+<tr><td><code>spring.messages.basename</code></td><td><code>messages/messages</code></td><td>all</td><td><code>application.properties</code></td></tr>
+<tr><td><code>management.endpoints.web.exposure.include</code></td><td><code>*</code></td><td>all</td><td><code>application.properties</code></td></tr>
+<tr><td><code>logging.level.org.springframework</code></td><td><code>INFO</code></td><td>all</td><td><code>application.properties</code></td></tr>
+<tr><td><code>spring.web.resources.cache.cachecontrol.max-age</code></td><td><code>12h</code></td><td>all</td><td><code>application.properties</code></td></tr>
+</tbody></table></div>
+<h3 id="mysql-profile-application-mysql-properties">MySQL Profile (<code>application-mysql.properties</code>)</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>Property Key</th><th>Value</th><th>Profile</th><th>Source</th>
+</tr></thead><tbody>
+<tr><td><code>database</code></td><td><code>mysql</code></td><td><code>mysql</code></td><td><code>application-mysql.properties</code></td></tr>
+<tr><td><code>spring.datasource.url</code></td><td><code>${MYSQL_URL:jdbc:mysql://localhost/petclinic}</code></td><td><code>mysql</code></td><td>Env var <code>MYSQL_URL</code> with fallback</td></tr>
+<tr><td><code>spring.datasource.username</code></td><td><code>${MYSQL_USER:petclinic}</code></td><td><code>mysql</code></td><td>Env var <code>MYSQL_USER</code> with fallback</td></tr>
+<tr><td><code>spring.datasource.password</code></td><td><code>${MYSQL_PASS:petclinic}</code></td><td><code>mysql</code></td><td>Env var <code>MYSQL_PASS</code> with fallback</td></tr>
+<tr><td><code>spring.sql.init.mode</code></td><td><code>always</code></td><td><code>mysql</code></td><td><code>application-mysql.properties</code></td></tr>
+</tbody></table></div>
+<h3 id="postgresql-profile-application-postgres-properties">PostgreSQL Profile (<code>application-postgres.properties</code>)</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>Property Key</th><th>Value</th><th>Profile</th><th>Source</th>
+</tr></thead><tbody>
+<tr><td><code>database</code></td><td><code>postgres</code></td><td><code>postgres</code></td><td><code>application-postgres.properties</code></td></tr>
+<tr><td><code>spring.datasource.url</code></td><td><code>${POSTGRES_URL:jdbc:postgresql://localhost/petclinic}</code></td><td><code>postgres</code></td><td>Env var <code>POSTGRES_URL</code> with fallback</td></tr>
+<tr><td><code>spring.datasource.username</code></td><td><code>${POSTGRES_USER:petclinic}</code></td><td><code>postgres</code></td><td>Env var <code>POSTGRES_USER</code> with fallback</td></tr>
+<tr><td><code>spring.datasource.password</code></td><td><code>${POSTGRES_PASS:petclinic}</code></td><td><code>postgres</code></td><td>Env var <code>POSTGRES_PASS</code> with fallback</td></tr>
+<tr><td><code>spring.sql.init.mode</code></td><td><code>always</code></td><td><code>postgres</code></td><td><code>application-postgres.properties</code></td></tr>
+</tbody></table></div>
+<h3 id="docker-compose-environment-variables">Docker Compose Environment Variables</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>Variable</th><th>Service</th><th>Value in Compose</th><th>Notes</th>
+</tr></thead><tbody>
+<tr><td><code>SERVER_PORT</code></td><td><code>petclinic</code></td><td><code>8080</code></td><td>Maps Spring <code>server.port</code></td></tr>
+<tr><td><code>MYSQL_URL</code></td><td><code>petclinic</code></td><td><code>jdbc:mysql://mysqlserver/petclinic</code></td><td>Overrides default localhost URL</td></tr>
+<tr><td><code>MYSQL_ROOT_PASSWORD</code></td><td><code>mysqlserver</code></td><td>(empty)</td><td>Allows empty root password for local dev</td></tr>
+<tr><td><code>MYSQL_ALLOW_EMPTY_PASSWORD</code></td><td><code>mysqlserver</code></td><td><code>true</code></td><td>Dev-only</td></tr>
+<tr><td><code>MYSQL_USER</code></td><td><code>mysqlserver</code></td><td><code>petclinic</code></td><td>DB user created at startup</td></tr>
+<tr><td><code>MYSQL_PASSWORD</code></td><td><code>mysqlserver</code></td><td><code>petclinic</code></td><td>Password for above user</td></tr>
+<tr><td><code>MYSQL_DATABASE</code></td><td><code>mysqlserver</code></td><td><code>petclinic</code></td><td>Schema name created at startup</td></tr>
+</tbody></table></div>
+<h2 id="startup-parameters-resource-requirements">Startup Parameters & Resource Requirements</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Service</th><th>JVM / Runtime Options</th><th>Memory Limits</th><th>Instance Count</th><th>Notes</th>
+</tr></thead><tbody>
+<tr><td><code>petclinic</code> (development, Compose)</td><td><code>-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8000</code> (JDWP debug agent)</td><td>Not configured</td><td>1</td><td><code>Dockerfile.multi</code> <code>development</code> stage runs <code>mvnw spring-boot:run -Dspring-boot.run.profiles=mysql</code></td></tr>
+<tr><td><code>petclinic</code> (production, <code>Dockerfile</code>)</td><td><code>-Djava.security.egd=file:/dev/./urandom</code></td><td>Not configured</td><td>1</td><td>Uses <code>eclipse-temurin:17-jre-jammy</code>; fat JAR exec</td></tr>
+<tr><td><code>mysqlserver</code> (Compose)</td><td>N/A (external image)</td><td>Not configured</td><td>1</td><td><code>mysql:8</code> official image</td></tr>
+</tbody></table></div>
+<p>No <code>-Xms</code>/<code>-Xmx</code> heap settings, Kubernetes resource requests/limits, or cloud deployment size configurations are present.</p>
+<h2 id="startup-dependency-chain">Startup Dependency Chain</h2>
+<pre><code>
+mysqlserver (MySQL 8)
+    ↑ depends_on (Docker Compose)
+petclinic
+</code></pre>
+<p>The <code>docker-compose.yml</code> specifies <code>depends_on: mysqlserver</code> for the <code>petclinic</code> service, meaning Compose starts MySQL before the application container. However, no <code>healthcheck</code> + <code>condition: service_healthy</code> is configured, so the application may attempt to connect before MySQL is fully ready. No <code>dockerize</code>, Kubernetes readiness probes, or Spring Cloud Config retry mechanisms are present.</p>
+<p>Spring Boot Actuator is available at <code>/actuator/health</code> as a readiness indicator once the application starts, but no external orchestration uses it.</p>
+<h2 id="secrets-sensitive-configuration">Secrets & Sensitive Configuration</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Secret Reference</th><th>Type</th><th>Storage</th>
+</tr></thead><tbody>
+<tr><td><code>${MYSQL_URL:jdbc:mysql://localhost/petclinic}</code></td><td>Database JDBC URL</td><td>Environment variable <code>MYSQL_URL</code>; fallback to plaintext default in properties file</td></tr>
+<tr><td><code>${MYSQL_USER:petclinic}</code></td><td>Database username</td><td>Environment variable <code>MYSQL_USER</code>; fallback to plaintext <code>petclinic</code> in properties file</td></tr>
+<tr><td><code>${MYSQL_PASS:petclinic}</code></td><td>Database password</td><td>Environment variable <code>MYSQL_PASS</code>; fallback to plaintext <code>petclinic</code> in properties file</td></tr>
+<tr><td><code>${POSTGRES_URL:jdbc:postgresql://localhost/petclinic}</code></td><td>Database JDBC URL</td><td>Environment variable <code>POSTGRES_URL</code>; fallback to plaintext default</td></tr>
+<tr><td><code>${POSTGRES_USER:petclinic}</code></td><td>Database username</td><td>Environment variable <code>POSTGRES_USER</code>; fallback to plaintext <code>petclinic</code></td></tr>
+<tr><td><code>${POSTGRES_PASS:petclinic}</code></td><td>Database password</td><td>Environment variable <code>POSTGRES_PASS</code>; fallback to plaintext <code>petclinic</code></td></tr>
+<tr><td><code>MYSQL_ROOT_PASSWORD</code> (Compose)</td><td>MySQL root password</td><td>Docker Compose env; set to empty string (dev only)</td></tr>
+</tbody></table></div>
+<p>No encryption (Jasypt, DPAPI, sealed secrets), no external secret stores (Vault, KeyVault, AWS Secrets Manager), and no Kubernetes Secrets are used.</p>
+<h3 id="secrets-provisioning-workflow">Secrets Provisioning Workflow</h3>
+<p>Secrets are passed as OS-level environment variables at process startup. In Docker Compose (local development), credentials are defined in plain text in <code>docker-compose.yml</code> with default values acceptable for local dev. In non-Compose deployments, the operator must inject <code>MYSQL_URL</code>, <code>MYSQL_USER</code>, <code>MYSQL_PASS</code> (or Postgres equivalents) into the container runtime environment before startup.</p>
+<p>There is no managed-identity, service-principal, or RBAC-based secrets model. The plaintext fallback values in <code>application-mysql.properties</code> (<code>petclinic</code>/<code>petclinic</code>) mean the application starts with default credentials if environment variables are not set, which is a security risk in non-development environments.</p>
+<h2 id="feature-flags">Feature Flags</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Flag Name / Conditional Bean</th><th>Default</th><th>Controlled By</th><th>Notes</th>
+</tr></thead><tbody>
+<tr><td><code>@EnableCaching</code> in <code>CacheConfiguration</code></td><td>Enabled (always)</td><td>Hardcoded in <code>@Configuration</code> class</td><td>Activates Spring Cache abstraction; no conditional property toggle</td></tr>
+<tr><td>Spring Boot DevTools auto-restart</td><td>Enabled in dev classpath</td><td>Presence of <code>spring-boot-devtools</code> on classpath</td><td><code>optional=true</code> in <code>pom.xml</code>; excluded from fat-JAR packaging automatically</td></tr>
+</tbody></table></div>
+<p>No LaunchDarkly, Unleash, Spring Feature Flags, or <code>@ConditionalOnProperty</code> feature toggles are present. Caching and DevTools are the only conditionally-active capabilities.</p>
+<h2 id="framework-runtime-versions">Framework & Runtime Versions</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Component</th><th>Version</th><th>Source</th>
+</tr></thead><tbody>
+<tr><td>Spring Boot</td><td>2.7.1</td><td><code>pom.xml</code> parent</td></tr>
+<tr><td>Spring Framework</td><td>5.3.x (managed by Boot BOM)</td><td>Spring Boot BOM</td></tr>
+<tr><td>Java (source/target compatibility)</td><td>1.8</td><td><code>pom.xml</code> <code><java.version>1.8</java.version></code></td></tr>
+<tr><td>Docker base image (dev)</td><td><code>eclipse-temurin:17-jdk-jammy</code></td><td><code>Dockerfile</code>, <code>Dockerfile.multi</code></td></tr>
+<tr><td>Docker base image (production)</td><td><code>eclipse-temurin:17-jre-jammy</code></td><td><code>Dockerfile.multi</code> production stage</td></tr>
+<tr><td>Hibernate ORM</td><td>5.6.x (managed by Boot BOM)</td><td>Spring Data JPA starter</td></tr>
+<tr><td>Thymeleaf</td><td>3.0.x (managed by Boot BOM)</td><td>Spring Boot Starter Thymeleaf</td></tr>
+<tr><td>Ehcache</td><td>3.10.x (managed by Boot BOM)</td><td><code>org.ehcache:ehcache</code></td></tr>
+<tr><td>JCache API (JSR-107)</td><td>1.1.1 (managed by Boot BOM)</td><td><code>javax.cache:cache-api</code></td></tr>
+<tr><td>Micrometer</td><td>1.9.x (managed by Boot BOM)</td><td>Spring Boot Actuator</td></tr>
+<tr><td>H2</td><td>2.1.x (managed by Boot BOM)</td><td><code>com.h2database:h2</code></td></tr>
+<tr><td>MySQL Connector/J</td><td>8.0.x (managed by Boot BOM)</td><td><code>mysql:mysql-connector-java</code></td></tr>
+<tr><td>PostgreSQL JDBC</td><td>42.x (managed by Boot BOM)</td><td><code>org.postgresql:postgresql</code></td></tr>
+<tr><td>Bootstrap</td><td>5.1.3</td><td><code>pom.xml</code> <code><webjars-bootstrap.version></code></td></tr>
+<tr><td>Font Awesome</td><td>4.7.0</td><td><code>pom.xml</code> <code><webjars-font-awesome.version></code></td></tr>
+<tr><td>Maven</td><td>3.x (wrapper)</td><td><code>mvnw</code> / <code>.mvn/wrapper/</code></td></tr>
+<tr><td>JaCoCo</td><td>0.8.7</td><td><code>pom.xml</code> <code><jacoco.version></code></td></tr>
+<tr><td>Spring Java Format</td><td>0.0.31</td><td><code>pom.xml</code> <code><spring-format.version></code></td></tr>
+<tr><td>nohttp-checkstyle</td><td>0.0.10</td><td><code>pom.xml</code> <code><nohttp-checkstyle.version></code></td></tr>
+<tr><td>MySQL (Docker)</td><td>8</td><td><code>docker-compose.yml</code> <code>image: mysql:8</code></td></tr>
+</tbody></table></div>
+<p>> Note: There is a version mismatch between the source-compatibility target (<code>java.version=1.8</code>) and the Docker base image (<code>eclipse-temurin:17</code>). The application compiles and runs on Java 17 in containers but is restricted to Java 8 language features and APIs by the Maven compiler settings.</p></div>
+</div>
+<div id="tab-workflows" class="tab-panel">
+  <div class="fact-content"><h1 id="core-business-workflows">Core Business Workflows</h1>
+<p>Spring PetClinic is a veterinary practice management application that allows clinic staff to register pet owners, manage their pets, schedule veterinary visits, and browse the clinic's roster of veterinarians with their specialties.</p>
+<h2 id="domain-entities">Domain Entities</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Entity</th><th>Service / Bounded Context</th><th>Description</th><th>Key Relationships</th>
+</tr></thead><tbody>
+<tr><td>Owner</td><td>Owner Management</td><td>A person who brings pets to the clinic; the primary aggregate root for the owner-pet-visit hierarchy</td><td>Has many Pets (cascade all); root of the owner aggregate</td></tr>
+<tr><td>Pet</td><td>Owner Management</td><td>An animal owned by an Owner; tracks name, birth date, and species type</td><td>Belongs to one Owner; has one PetType; has many Visits (cascade all)</td></tr>
+<tr><td>PetType</td><td>Owner Management</td><td>A lookup / reference entity defining the species of a pet (dog, cat, hamster, etc.)</td><td>Used by Pet as a type reference</td></tr>
+<tr><td>Visit</td><td>Owner Management</td><td>A single clinic appointment record attached to a Pet, capturing the date and clinical description</td><td>Belongs to one Pet; created/deleted via Pet cascade</td></tr>
+<tr><td>Vet</td><td>Vet Management</td><td>A veterinarian employed by the clinic, identified by name and a set of medical specialties</td><td>Has many Specialties (many-to-many)</td></tr>
+<tr><td>Specialty</td><td>Vet Management</td><td>A medical specialty area (e.g., surgery, dentistry, radiology) that a Vet may possess</td><td>Associated with many Vets</td></tr>
+</tbody></table></div>
+<h2 id="service-to-domain-mapping">Service-to-Domain Mapping</h2>
+<p>This is a single-service monolith, so all domain contexts live within the same deployable unit. Logically the codebase separates two bounded contexts by Java package:</p>
+<div class="table-wrap"><table><thead><tr>
+<th>Service / Module</th><th>Domain Context</th><th>Owned Entities</th><th>External Dependencies</th>
+</tr></thead><tbody>
+<tr><td><code>owner</code> package</td><td>Owner Management</td><td>Owner, Pet, PetType, Visit</td><td>None; uses <code>OwnerRepository</code> for all persistence</td></tr>
+<tr><td><code>vet</code> package</td><td>Vet Management</td><td>Vet, Specialty</td><td>None; uses <code>VetRepository</code> for all persistence; vet list served from cache</td></tr>
+</tbody></table></div>
+<p>The two contexts share the same database schema but do not call each other. The <code>owner</code> context is the source of truth for all pet and visit data; the <code>vet</code> context owns all vet and specialty data.</p>
+<h2 id="primary-workflows">Primary Workflows</h2>
+<h3 id="workflow-1-register-a-new-owner">Workflow 1: Register a New Owner</h3>
+<p>A staff member registers a new pet owner so their pets can be tracked in the system.</p>
+<ol>
+<li>Staff navigates to the owner registration form (<code>GET /owners/new</code>).</li>
+<li>Staff fills in first name, last name, address, city, and telephone, then submits (<code>POST /owners/new</code>).</li>
+<li>Spring MVC binds the form fields to an <code>Owner</code> object and invokes Bean Validation.</li>
+<li>If validation fails (empty required fields, telephone longer than 10 digits), the form is re-rendered with error messages.</li>
+<li>If validation passes, <code>OwnerRepository.save(owner)</code> persists the new Owner to the database.</li>
+<li>The user is redirected to the owner's detail page.</li>
+</ol>
+<h3 id="workflow-2-find-and-update-an-existing-owner">Workflow 2: Find and Update an Existing Owner</h3>
+<ol>
+<li>Staff searches by last name (<code>GET /owners?lastName=Smith</code>); the repository performs a paginated <code>LIKE 'Smith%'</code> query.</li>
+<li>If exactly one match is found, the user is redirected directly to that owner's detail page.</li>
+<li>If multiple matches are found, a paginated list is displayed; staff selects one to view.</li>
+<li>Staff clicks Edit, which loads the update form (<code>GET /owners/{ownerId}/edit</code>).</li>
+<li>Staff modifies fields and submits (<code>POST /owners/{ownerId}/edit</code>).</li>
+<li>Validation runs again; on success the owner is saved and the user is redirected to the detail page.</li>
+</ol>
+<h3 id="workflow-3-add-a-pet-to-an-owner">Workflow 3: Add a Pet to an Owner</h3>
+<ol>
+<li>From the owner detail page, staff clicks "Add New Pet" (<code>GET /owners/{ownerId}/pets/new</code>).</li>
+<li>The form is pre-populated with the available PetType lookup values from the database.</li>
+<li>Staff enters pet name, birth date, and selects a type, then submits (<code>POST /owners/{ownerId}/pets/new</code>).</li>
+<li><code>PetValidator</code> checks that name is not blank and a type is selected.</li>
+<li>A duplicate name check verifies that the same owner does not already have a pet with the identical name.</li>
+<li>If validation passes, the pet is added to the owner aggregate and <code>OwnerRepository.save(owner)</code> cascades the insert to the <code>pets</code> table.</li>
+<li>Staff is redirected to the owner's detail page showing the new pet.</li>
+</ol>
+<h3 id="workflow-4-schedule-a-veterinary-visit">Workflow 4: Schedule a Veterinary Visit</h3>
+<ol>
+<li>From the owner detail page, staff clicks "Add Visit" for a specific pet (<code>GET /owners/{ownerId}/pets/{petId}/visits/new</code>).</li>
+<li>Before the form renders, <code>VisitController.loadPetWithVisit()</code> loads the owner and pet from the database and pre-initialises a new <code>Visit</code> with today's date.</li>
+<li>Staff optionally changes the visit date and enters a description of the clinical reason, then submits (<code>POST /owners/{ownerId}/pets/{petId}/visits/new</code>).</li>
+<li>Bean Validation checks that the description is not empty.</li>
+<li>If validation passes, <code>Owner.addVisit(petId, visit)</code> attaches the visit to the correct pet in the aggregate, and <code>OwnerRepository.save(owner)</code> cascades the insert to the <code>visits</code> table.</li>
+<li>Staff is redirected to the owner's detail page, which now lists the new visit under the relevant pet.</li>
+</ol>
+<h3 id="workflow-5-browse-the-veterinarian-roster">Workflow 5: Browse the Veterinarian Roster</h3>
+<ol>
+<li>Staff navigates to the vet list page (<code>GET /vets.html?page=N</code>).</li>
+<li><code>VetController.showVetList()</code> requests a paginated list from <code>VetRepository.findAll(pageable)</code>.</li>
+<li>The repository method is annotated <code>@Cacheable("vets")</code>. On the first request the database is queried; on subsequent requests the result is served from the in-process cache, reducing database load.</li>
+<li>The HTML page renders each vet with their name and comma-separated specialties.</li>
+<li>Alternatively, <code>GET /vets</code> returns the full vet list as a JSON (or XML) response for API consumers.</li>
+</ol>
+<h2 id="cross-service-data-flows">Cross-Service Data Flows</h2>
+<p>Spring PetClinic is a single-service application with no inter-service communication. All data flows are intra-service JPA calls within the same JVM process. There is no API gateway aggregation, no event-driven communication, and no circuit breaker.</p>
+<p>The one notable data composition pattern occurs on the <strong>owner detail page</strong>: the <code>Owner</code> entity is loaded with <code>left join fetch owner.pets</code> so pets are eagerly populated, and each <code>Pet</code> in turn eagerly loads its <code>Visit</code> collection. This produces a fully denormalised owner-pets-visits graph in a single traversal of the object graph, making the detail view self-contained without additional queries.</p>
+<p>Since the application is a monolith, service-unavailability fallback patterns are not applicable. The only degradation path is a database connectivity failure, which surfaces as an unhandled exception and an error page.</p>
+<h2 id="business-workflow-sequence">Business Workflow Sequence</h2>
+<div class="mermaid">
+sequenceDiagram
+    participant Staff as "Clinic Staff"
+    participant OCtrl as "OwnerController"
+    participant PCtrl as "PetController"
+    participant VCtrl as "VisitController"
+    participant ORepo as "OwnerRepository"
+    participant DB as "Database"
+
+    Note over Staff,DB: Workflow: Register owner, add pet, schedule visit
+
+    Staff->>OCtrl: Submit new owner form (POST /owners/new)
+    OCtrl->>OCtrl: Validate owner fields (Bean Validation)
+    alt Validation fails
+        OCtrl-->>Staff: Re-render form with errors
+    else Validation passes
+        OCtrl->>ORepo: save(newOwner)
+        ORepo->>DB: INSERT into owners
+        DB-->>ORepo: OK (generated id)
+        OCtrl-->>Staff: Redirect to owner detail page
+    end
+
+    Staff->>PCtrl: Submit new pet form (POST /owners/1/pets/new)
+    PCtrl->>ORepo: findById(ownerId)
+    ORepo->>DB: SELECT owner with pets
+    DB-->>ORepo: Owner aggregate
+    PCtrl->>PCtrl: PetValidator checks name and type
+    PCtrl->>PCtrl: Duplicate name check within owner's pets
+    alt Validation fails
+        PCtrl-->>Staff: Re-render pet form with errors
+    else Validation passes
+        PCtrl->>ORepo: save(owner with new pet)
+        ORepo->>DB: INSERT into pets (cascade)
+        DB-->>ORepo: OK
+        PCtrl-->>Staff: Redirect to owner detail page
+    end
+
+    Staff->>VCtrl: Submit visit form (POST /owners/1/pets/1/visits/new)
+    VCtrl->>ORepo: findById(ownerId)
+    ORepo->>DB: SELECT owner with pets
+    DB-->>ORepo: Owner + Pet
+    VCtrl->>VCtrl: Validate description is not empty
+    alt Validation fails
+        VCtrl-->>Staff: Re-render visit form with errors
+    else Validation passes
+        VCtrl->>ORepo: save(owner with new visit via cascade)
+        ORepo->>DB: INSERT into visits (cascade)
+        DB-->>ORepo: OK
+        VCtrl-->>Staff: Redirect to owner detail page
+    end
+</div>
+<h2 id="business-rules-decision-logic">Business Rules & Decision Logic</h2>
+<h3 id="validation-rules">Validation Rules</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>Entity</th><th>Rule</th><th>Enforced By</th>
+</tr></thead><tbody>
+<tr><td>Owner</td><td><code>firstName</code>, <code>lastName</code>, <code>address</code>, <code>city</code>, <code>telephone</code> must not be empty</td><td><code>@NotEmpty</code> on <code>Person</code> / <code>Owner</code> fields (Bean Validation)</td></tr>
+<tr><td>Owner</td><td><code>telephone</code> must be numeric and at most 10 digits</td><td><code>@Digits(fraction=0, integer=10)</code> on <code>Owner.telephone</code></td></tr>
+<tr><td>Pet</td><td><code>name</code> must not be blank</td><td><code>PetValidator.validate()</code> — rejects blank name</td></tr>
+<tr><td>Pet</td><td><code>type</code> must be selected</td><td><code>PetValidator.validate()</code> — rejects null PetType</td></tr>
+<tr><td>Pet</td><td><code>name</code> must be unique within the same owner (new pets only)</td><td><code>PetController.processCreationForm()</code> — calls <code>owner.getPet(name, true)</code> and rejects if result is non-null</td></tr>
+<tr><td>Visit</td><td><code>description</code> must not be empty</td><td><code>@NotEmpty</code> on <code>Visit.description</code> (Bean Validation)</td></tr>
+</tbody></table></div>
+<h3 id="decision-logic">Decision Logic</h3>
+<ul>
+<li><strong>Owner search result branching</strong>: If the last-name search returns exactly 1 result the user is redirected directly to that owner's detail page; if it returns 0 results an error is shown on the search form; if it returns more than 1 the paginated list is displayed.</li>
+<li><strong>Duplicate pet name guard</strong>: Only applies to <em>new</em> (not yet persisted) pets. The <code>ignoreNew=true</code> flag in <code>owner.getPet(name, true)</code> excludes the current unsaved pet from the duplicate check, preventing a false-positive against itself.</li>
+<li><strong>Visit date default</strong>: A new <code>Visit</code> object pre-sets <code>visitDate = LocalDate.now()</code> in its no-argument constructor, providing a sensible default that staff can override.</li>
+</ul>
+<h3 id="data-integrity-rules">Data Integrity Rules</h3>
+<ul>
+<li><strong>Owner aggregate root</strong>: Pets and Visits are always created and saved through the <code>Owner</code> aggregate root via <code>OwnerRepository.save(owner)</code>. Direct saves to <code>Pet</code> or <code>Visit</code> outside the owner are not supported by the repository API, enforcing aggregate boundaries.</li>
+<li><strong>Bidirectional relationship maintenance</strong>: <code>Owner.addPet(pet)</code> adds the pet to the owner's list only when the pet is new (not yet persisted), preventing duplicates in the in-memory collection. <code>Pet.addVisit(visit)</code> appends visits to the pet's set directly.</li>
+<li><strong>Cascade semantics</strong>: <code>CascadeType.ALL</code> on <code>Owner.pets</code> and <code>Pet.visits</code> means that deleting an owner would cascade to pets and then to visits. No delete workflow currently exists in the UI, but the schema cascade is active at the ORM level.</li>
+</ul>
+<h3 id="transaction-boundaries">Transaction Boundaries</h3>
+<ul>
+<li>All repository read methods are annotated <code>@Transactional(readOnly = true)</code>.</li>
+<li><code>OwnerRepository.save()</code> is inherited from Spring Data and runs in a default read-write transaction.</li>
+<li>No explicit <code>@Transactional</code> annotations appear on controllers or service classes; transaction boundaries are managed at the repository method level.</li>
+<li>No saga patterns, eventual consistency, or compensating transactions are present.</li>
+</ul>
+<h3 id="error-handling">Error Handling</h3>
+<ul>
+<li>Bean Validation errors are captured by Spring MVC's <code>BindingResult</code> and surfaced as form field errors on the same HTML view.</li>
+<li>The <code>CrashController</code> (<code>GET /oups</code>) intentionally throws a <code>RuntimeException</code> to demonstrate Spring Boot's whitelabel error page; it has no business purpose.</li>
+<li>No custom business exception hierarchy, dead-letter queues, or compensating actions are defined.</li>
+</ul>
+<h3 id="authorization">Authorization</h3>
+<p>No authentication or role-based authorization is implemented. All workflows are publicly accessible. There are no <code>@PreAuthorize</code>, <code>@Secured</code>, or <code>@RolesAllowed</code> annotations anywhere in the codebase.</p></div>
+</div>
+<div id="tab-deps" class="tab-panel">
+  <div class="fact-content"><h1 id="dependency-map">Dependency Map</h1>
+<p>Spring PetClinic (v2.7.0-SNAPSHOT) declares 15 runtime/compile-scope dependencies managed under the Spring Boot 2.7.1 parent BOM, plus a test bundle and a set of build plugins.</p>
+<h2 id="dependencies">Dependencies</h2>
+<div class="mermaid">
+flowchart LR
+    App["spring-petclinic v2.7.0"]
+
+    subgraph BOM["Parent BOM"]
+        BootBOM["spring-boot-starter-parent v2.7.1"]
+    end
+
+    subgraph Web["Web Frameworks"]
+        SpringWeb["Spring Boot Starter Web 2.7.1"]
+        Thymeleaf["Spring Boot Starter Thymeleaf 2.7.1"]
+        Bootstrap["Bootstrap WebJar 5.1.3"]
+        FontAwesome["Font-Awesome WebJar 4.7.0"]
+        WebjarsLocator["Webjars Locator Core 0.50"]
+    end
+
+    subgraph DB["Database / ORM"]
+        DataJPA["Spring Boot Starter Data JPA 2.7.1"]
+        H2["H2 Database 2.1.x (runtime)"]
+        MySQLDriver["MySQL Connector/J 8.0.x (runtime)"]
+        PGDriver["PostgreSQL JDBC 42.x (runtime)"]
+    end
+
+    subgraph Cache["Caching"]
+        BootCache["Spring Boot Starter Cache 2.7.1"]
+        JCacheAPI["JCache API 1.1.1"]
+        Ehcache["Ehcache 3.10.x"]
+    end
+
+    subgraph Observability["Observability"]
+        Actuator["Spring Boot Starter Actuator 2.7.1"]
+    end
+
+    subgraph Validation["Validation"]
+        Validation["Spring Boot Starter Validation 2.7.1"]
+    end
+
+    subgraph DevTools["Developer Tools"]
+        DevToolsLib["Spring Boot DevTools 2.7.1 (optional)"]
+    end
+
+    App -.->|"managed by"| BootBOM
+    App -->|"web"| Web
+    App -->|"persistence"| DB
+    App -->|"caching"| Cache
+    App -->|"observability"| Observability
+    App -->|"validation"| Validation
+    App -->|"dev"| DevTools
+    BootBOM -.->|"governs versions"| Web
+    BootBOM -.->|"governs versions"| DB
+    BootBOM -.->|"governs versions"| Cache
+    BootBOM -.->|"governs versions"| Observability
+    BootBOM -.->|"governs versions"| Validation
+</div>
+<h3 id="dependency-summary">Dependency Summary</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>Category</th><th>Count</th><th>Key Libraries</th><th>Notes</th>
+</tr></thead><tbody>
+<tr><td>Web Frameworks</td><td>5</td><td>Spring Boot Starter Web 2.7.1, Thymeleaf 2.7.1, Bootstrap 5.1.3</td><td>Legacy Spring Boot 2.x; Thymeleaf 3.0 under the hood</td></tr>
+<tr><td>Database / ORM</td><td>4</td><td>Spring Data JPA 2.7.1, H2 2.1.x, MySQL Connector 8.0.x, PostgreSQL 42.x</td><td>Three database drivers bundled; only one active per profile</td></tr>
+<tr><td>Caching</td><td>3</td><td>Spring Boot Starter Cache, JCache API 1.1.1, Ehcache 3.10.x</td><td>JSR-107 caching with Ehcache 3 as implementation</td></tr>
+<tr><td>Observability</td><td>1</td><td>Spring Boot Actuator 2.7.1</td><td>All endpoints exposed (<code>management.endpoints.web.exposure.include=*</code>)</td></tr>
+<tr><td>Validation</td><td>1</td><td>Spring Boot Starter Validation 2.7.1</td><td>Bean Validation 2.0 (Hibernate Validator under the hood)</td></tr>
+<tr><td>Developer Tools</td><td>1</td><td>Spring Boot DevTools 2.7.1</td><td>Optional dependency; automatic restarts in development</td></tr>
+</tbody></table></div>
+<h3 id="version-compatibility-risks">Version & Compatibility Risks</h3>
+<p>Spring Boot 2.7.1 is based on Java 8 (as declared in <code>pom.xml</code>), which reached end-of-life in 2019 for Oracle JDK and requires a paid support subscription. Spring Boot 2.7.x itself reached end-of-life in November 2023, meaning no further community security patches are available. The <code>mysql-connector-java</code> group ID changed to <code>com.mysql</code> in 8.0.31; the project still uses the deprecated <code>mysql:mysql-connector-java</code> artifact. All core Spring dependency versions are managed by the Spring Boot parent BOM, so they are internally consistent, but the entire stack should be upgraded to Spring Boot 3.x (Java 17+) to receive continued support.</p>
+<h3 id="notable-observations">Notable Observations</h3>
+<ul>
+<li><strong>All three database drivers are bundled at runtime</strong>: H2, MySQL Connector/J, and the PostgreSQL driver are all on the classpath simultaneously. Only one is active per Spring profile, but shipping unused drivers increases image size and attack surface.</li>
+<li><strong>Actuator fully open</strong>: <code>management.endpoints.web.exposure.include=*</code> exposes every Actuator endpoint (including <code>/actuator/env</code> and <code>/actuator/heapdump</code>) without authentication, which is a security concern in non-development environments.</li>
+<li><strong>Java source compatibility set to 1.8</strong>: <code><java.version>1.8</java.version></code> targets Java 8, blocking use of modern language features (records, sealed classes, text blocks) available in Java 17+.</li>
+<li><strong>No security framework declared</strong>: The application has no Spring Security or equivalent dependency, meaning all HTTP endpoints (including Actuator) are unauthenticated.</li>
+</ul>
+<h2 id="test-dependencies">Test Dependencies</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Framework</th><th>Version</th><th>Notes</th>
+</tr></thead><tbody>
+<tr><td>Spring Boot Starter Test</td><td>2.7.1</td><td>Meta-dependency pulling in JUnit 5, Mockito, AssertJ, Spring Test, Hamcrest, JSONassert, JsonPath</td></tr>
+<tr><td>JUnit 5 (Jupiter)</td><td>5.8.x (via Boot BOM)</td><td>Primary test runner</td></tr>
+<tr><td>Mockito</td><td>4.5.x (via Boot BOM)</td><td>Mocking framework</td></tr>
+<tr><td>AssertJ</td><td>3.22.x (via Boot BOM)</td><td>Fluent assertion library</td></tr>
+<tr><td>Spring Test</td><td>5.3.x (via Boot BOM)</td><td>Integration test support (<code>@SpringBootTest</code>, <code>MockMvc</code>)</td></tr>
+<tr><td>Hamcrest</td><td>2.2 (via Boot BOM)</td><td>Matcher-based assertions</td></tr>
+</tbody></table></div>
+<p>Total test-scope dependencies: 6 (declared as 1 starter, resolving to ~6 frameworks via transitive BOM management)</p>
+<p>The test suite uses <code>@SpringBootTest</code> for integration tests and <code>@WebMvcTest</code> for slice tests, giving good coverage of controller and JPA layers. No Testcontainers dependency is present, so MySQL and PostgreSQL database profiles are not exercised in automated tests — only H2 is tested via the default profile.</p></div>
+</div>
+<div id="tab-data" class="tab-panel">
+  <div class="fact-content"><h1 id="data-architecture-persistence-layer">Data Architecture & Persistence Layer</h1>
+<p>Spring PetClinic uses a single relational schema with 7 tables managed by 6 JPA entities (plus 3 mapped superclasses), accessed via Hibernate ORM through two Spring Data Repository interfaces and supporting pluggable H2, MySQL, or PostgreSQL backends.</p>
+<h2 id="database-configuration">Database Configuration</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Module</th><th>DB Type</th><th>Profile</th><th>Driver</th><th>Connection</th><th>Migration Tool</th>
+</tr></thead><tbody>
+<tr><td>spring-petclinic</td><td>H2 (in-memory)</td><td>default (no profile)</td><td><code>com.h2database:h2</code></td><td>Embedded, in-memory; URL not configured externally</td><td>SQL init scripts (<code>schema.sql</code> + <code>data.sql</code>); Hibernate does not manage schema (<code>ddl-auto=none</code>)</td></tr>
+<tr><td>spring-petclinic</td><td>MySQL 8</td><td><code>mysql</code></td><td><code>mysql:mysql-connector-java</code></td><td>JDBC URL from env var <code>MYSQL_URL</code> (default: <code>jdbc:mysql://localhost/petclinic</code>); credentials from <code>MYSQL_USER</code>/<code>MYSQL_PASS</code></td><td>SQL init scripts (<code>schema.sql</code> + <code>data.sql</code>); <code>spring.sql.init.mode=always</code> (idempotent scripts)</td></tr>
+<tr><td>spring-petclinic</td><td>PostgreSQL</td><td><code>postgres</code></td><td><code>org.postgresql:postgresql</code></td><td>JDBC URL from env var <code>POSTGRES_URL</code> (default: <code>jdbc:postgresql://localhost/petclinic</code>); credentials from <code>POSTGRES_USER</code>/<code>POSTGRES_PASS</code></td><td>SQL init scripts (<code>schema.sql</code> + <code>data.sql</code>); <code>spring.sql.init.mode=always</code> (idempotent scripts)</td></tr>
+</tbody></table></div>
+<p>No Flyway, Liquibase, or other versioned migration tool is used. Schema management is handled entirely by per-database SQL scripts under <code>src/main/resources/db/{h2,mysql,postgres}/</code>. HikariCP is the default connection pool (Spring Boot auto-configuration); no custom pool sizing is configured. For the full property inventory see <code>configuration-inventory.md</code>.</p>
+<h2 id="data-ownership-per-service">Data Ownership per Service</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Service</th><th>Tables Owned</th><th>ORM Framework</th><th>Caching</th><th>Notes</th>
+</tr></thead><tbody>
+<tr><td>spring-petclinic</td><td>owners, pets, types, visits, vets, specialties, vet_specialties</td><td>Hibernate 5.6.x via Spring Data JPA</td><td>Ehcache 3 (JCache) for <code>vets</code> table reads</td><td>Single deployable; all tables owned in one schema; no schema-per-service separation</td></tr>
+</tbody></table></div>
+<h2 id="entity-model">Entity Model</h2>
+<div class="mermaid">
+erDiagram
+    Owner ||--o{ Pet : "has"
+    Pet }o--|| PetType : "is of"
+    Pet ||--o{ Visit : "has"
+    Vet }o--o{ Specialty : "has"
+
+    Owner {
+        int    id          PK
+        string firstName
+        string lastName
+        string address
+        string city
+        string telephone
+    }
+
+    Pet {
+        int    id         PK
+        string name
+        date   birthDate
+        int    ownerId    FK
+        int    typeId     FK
+    }
+
+    PetType {
+        int    id    PK
+        string name
+    }
+
+    Visit {
+        int    id          PK
+        date   visitDate
+        string description
+        int    petId       FK
+    }
+
+    Vet {
+        int    id         PK
+        string firstName
+        string lastName
+    }
+
+    Specialty {
+        int    id    PK
+        string name
+    }
+</div>
+<p><strong>Inheritance hierarchy (mapped superclasses — not separate tables):</strong></p>
+<ul>
+<li><code>BaseEntity</code> → provides <code>id</code> (auto-generated <code>INTEGER</code> PK, <code>IDENTITY</code> strategy) and <code>isNew()</code> check</li>
+<li><code>NamedEntity extends BaseEntity</code> → adds <code>name</code> column; used by <code>PetType</code> and <code>Specialty</code></li>
+<li><code>Person extends BaseEntity</code> → adds <code>firstName</code> + <code>lastName</code>; used by <code>Owner</code> and <code>Vet</code></li>
+</ul>
+<p><strong>Fetch strategy and cascade:</strong></p>
+<ul>
+<li><code>Owner.pets</code>: <code>@OneToMany(cascade = ALL, fetch = EAGER)</code> — all pets are loaded with the owner; saving the owner cascades to pets</li>
+<li><code>Pet.visits</code>: <code>@OneToMany(cascade = ALL, fetch = EAGER)</code> — all visits are loaded with the pet; cascade ALL propagates saves/deletes</li>
+<li><code>Pet.type</code>: <code>@ManyToOne</code> — default <code>EAGER</code> for <code>@ManyToOne</code>; no cascade</li>
+<li><code>Vet.specialties</code>: <code>@ManyToMany(fetch = EAGER)</code> via <code>vet_specialties</code> join table; no cascade</li>
+</ul>
+<p>All <code>@Transactional(readOnly = true)</code> annotations are applied at the repository interface method level. Write operations rely on the default transaction from Spring Data repository's <code>save()</code>.</p>
+<h2 id="key-repository-methods">Key Repository Methods</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Repository</th><th>Entity</th><th>Notable Custom Methods</th><th>Purpose</th>
+</tr></thead><tbody>
+<tr><td><code>OwnerRepository</code></td><td><code>Owner</code></td><td><code>findByLastName(String lastName, Pageable pageable)</code></td><td>Paginated search by last name prefix using JPQL <code>LIKE :lastName%</code></td></tr>
+<tr><td><code>OwnerRepository</code></td><td><code>Owner</code></td><td><code>findById(Integer id)</code></td><td>Fetch owner with pets eagerly loaded (JPQL <code>left join fetch owner.pets</code>)</td></tr>
+<tr><td><code>OwnerRepository</code></td><td><code>Owner</code></td><td><code>findAll(Pageable pageable)</code></td><td>Paginated full owner list</td></tr>
+<tr><td><code>OwnerRepository</code></td><td><code>PetType</code></td><td><code>findPetTypes()</code></td><td>Returns all <code>PetType</code> records ordered by name (used to populate pet creation form)</td></tr>
+<tr><td><code>OwnerRepository</code></td><td><code>Owner</code></td><td><code>save(Owner owner)</code></td><td>Persists owner and cascades to pets and visits</td></tr>
+<tr><td><code>VetRepository</code></td><td><code>Vet</code></td><td><code>findAll()</code></td><td>Returns all vets as <code>Collection<Vet></code> (cached under <code>"vets"</code>)</td></tr>
+<tr><td><code>VetRepository</code></td><td><code>Vet</code></td><td><code>findAll(Pageable pageable)</code></td><td>Paginated vet list (cached under <code>"vets"</code>)</td></tr>
+</tbody></table></div>
+<p>Both repositories extend <code>Repository<T, ID></code> (the minimal Spring Data marker interface) rather than <code>JpaRepository</code>, keeping the public API intentionally small. No <code>@NamedQuery</code>, stored procedures, or <code>@NativeQuery</code> are used.</p>
+<h2 id="caching-strategy">Caching Strategy</h2>
+<div class="table-wrap"><table><thead><tr>
+<th>Cache Name</th><th>Provider</th><th>Scope</th><th>Pattern</th><th>Rationale</th>
+</tr></thead><tbody>
+<tr><td><code>vets</code></td><td>Ehcache 3 via JCache (JSR-107)</td><td>In-process JVM</td><td>Cache-aside (<code>@Cacheable</code>)</td><td>Vet data changes rarely; caching avoids repeated <code>SELECT vet ... </code> + <code>vet_specialties</code> JOIN on every page load</td></tr>
+</tbody></table></div>
+<p><strong>Configuration</strong>: <code>CacheConfiguration</code> (in <code>system</code> package) registers the <code>"vets"</code> cache via a <code>JCacheManagerCustomizer</code> bean using a <code>MutableConfiguration</code> with statistics enabled. No TTL or size limit is explicitly set — the cache lives for the JVM lifetime. No <code>@CacheEvict</code> annotation exists, meaning the cache is never invalidated at runtime; a restart is required to pick up vet data changes.</p>
+<p><strong>Second-level cache</strong>: Hibernate's second-level cache is not enabled. All caching is done at the repository method level via Spring's <code>@Cacheable</code> abstraction.</p>
+<h2 id="data-ownership-boundaries">Data Ownership Boundaries</h2>
+<p>The application uses a <strong>shared single-database, single-schema</strong> topology: all 7 tables reside in the same schema, owned and accessed exclusively by the single <code>spring-petclinic</code> service. There are no separate databases per bounded context and no cross-service data access patterns (no Feign clients, no remote repository calls). All data access is through direct JPA within the same JVM.</p>
+<p><strong>Read/write patterns</strong>: The owner, pet, and visit aggregate is write-heavy (form submissions). The vet listing is read-heavy and benefits from the in-process cache. No CQRS pattern is applied — the same repositories serve both reads and writes.</p>
+<h3 id="data-classification-sensitivity">Data Classification & Sensitivity</h3>
+<div class="table-wrap"><table><thead><tr>
+<th>Entity</th><th>Sensitive Fields</th><th>Classification</th><th>Controls in Place</th>
+</tr></thead><tbody>
+<tr><td><code>Owner</code></td><td><code>firstName</code>, <code>lastName</code>, <code>address</code>, <code>city</code>, <code>telephone</code></td><td>PII</td><td>None — stored in plaintext; no encryption-at-rest, data masking, or field-level access control configured</td></tr>
+<tr><td><code>Vet</code></td><td><code>firstName</code>, <code>lastName</code></td><td>PII (minimal — professional directory data)</td><td>None — stored in plaintext</td></tr>
+<tr><td><code>Visit</code></td><td><code>description</code> (may contain medical notes)</td><td>Potentially PHI</td><td>None — stored in plaintext; no access control or encryption</td></tr>
+<tr><td><code>Pet</code></td><td><code>name</code>, <code>birthDate</code></td><td>Non-sensitive</td><td>N/A</td></tr>
+<tr><td><code>PetType</code></td><td><code>name</code></td><td>Non-sensitive</td><td>N/A</td></tr>
+<tr><td><code>Specialty</code></td><td><code>name</code></td><td>Non-sensitive</td><td>N/A</td></tr>
+</tbody></table></div>
+<p>The <code>Owner</code> entity stores PII (name, address, telephone) and the <code>Visit.description</code> field may contain health-related notes classifiable as PHI. No encryption-at-rest, field-level masking, RBAC, or audit logging is configured. The database credentials are injected via environment variables (not hardcoded in source), which is the only data-security control present.</p></div>
+</div>
+<p class="footer">Your feedback is invaluable &mdash; <a href="https://aka.ms/ghcp-appmod/feedback">Share feedback</a></p>
+<script>
+function toggleRow(rowId, triggerRow) {
+  var detail = document.getElementById(rowId);
+  var btn = document.getElementById('btn-' + rowId);
+  if (!detail) return;
+  var visible = detail.style.display !== 'none';
+  detail.style.display = visible ? 'none' : 'table-row';
+  if (btn) btn.classList.toggle('open', !visible);
+}
+(function() {
+  var nav = document.querySelector('.tab-nav');
+  if (!nav) return;
+  nav.addEventListener('click', function(e) {
+    var btn = e.target.closest('.tab-btn');
+    if (!btn) return;
+    var targetId = btn.getAttribute('data-tab');
+    document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+    btn.classList.add('active');
+    var panel = document.getElementById(targetId);
+    if (panel) {
+      panel.classList.add('active');
+      if (window.__mermaidReady) { window.__renderMermaidIn(panel); }
+    }
+  });
+})();
+
+// ── Diagram lightbox ────────────────────────────────────────
+(function() {
+  var lightbox = document.getElementById('diagram-lightbox');
+  var inner = document.getElementById('diagram-lightbox-inner');
+  var closeBtn = document.getElementById('diagram-lightbox-close');
+  if (!lightbox || !inner || !closeBtn) return;
+
+  var scale = 1;
+  var translateX = 0;
+  var translateY = 0;
+  var isDragging = false;
+  var dragStartX = 0;
+  var dragStartY = 0;
+
+  function applyTransform() {
+    var svg = inner.querySelector('svg');
+    if (svg) {
+      svg.style.transform = 'translate(' + translateX + 'px, ' + translateY + 'px) scale(' + scale + ')';
+      svg.style.transformOrigin = 'center center';
+      svg.style.transition = 'none';
+    }
+  }
+
+  function resetTransform() {
+    scale = 1; translateX = 0; translateY = 0;
+    applyTransform();
+  }
+
+  function openLightbox(svgEl) {
+    inner.innerHTML = svgEl.outerHTML;
+    var injected = inner.querySelector('svg');
+    if (injected) {
+      injected.removeAttribute('width');
+      injected.removeAttribute('height');
+      injected.style.cursor = 'grab';
+    }
+    resetTransform();
+    lightbox.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox() {
+    lightbox.classList.remove('open');
+    inner.innerHTML = '';
+    document.body.style.overflow = '';
+    resetTransform();
+  }
+
+  inner.addEventListener('wheel', function(e) {
+    e.preventDefault();
+    var delta = e.deltaY > 0 ? 0.9 : 1.1;
+    scale = Math.min(Math.max(scale * delta, 0.3), 8);
+    applyTransform();
+  }, { passive: false });
+
+  inner.addEventListener('mousedown', function(e) {
+    if (e.button !== 0) return;
+    isDragging = true;
+    dragStartX = e.clientX - translateX;
+    dragStartY = e.clientY - translateY;
+    var svg = inner.querySelector('svg');
+    if (svg) { svg.style.cursor = 'grabbing'; }
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', function(e) {
+    if (!isDragging) return;
+    translateX = e.clientX - dragStartX;
+    translateY = e.clientY - dragStartY;
+    applyTransform();
+  });
+
+  document.addEventListener('mouseup', function() {
+    if (!isDragging) return;
+    isDragging = false;
+    var svg = inner.querySelector('svg');
+    if (svg) { svg.style.cursor = 'grab'; }
+  });
+
+  inner.addEventListener('dblclick', function() { resetTransform(); });
+
+  document.addEventListener('click', function(e) {
+    var card = e.target.closest('.mermaid');
+    if (!card) return;
+    if (e.target.closest('.diagram-lightbox-close')) return;
+    var svg = card.querySelector('svg');
+    if (svg) { openLightbox(svg); }
+  });
+
+  closeBtn.addEventListener('click', closeLightbox);
+
+  lightbox.addEventListener('click', function(e) {
+    if (e.target === lightbox) { closeLightbox(); }
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') { closeLightbox(); }
+  });
+})();
+
+var _currentTarget = '';
+
+function toggleMultiSelect(id) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  document.querySelectorAll('.multi-select.open').forEach(function(ms) { if (ms.id !== id) ms.classList.remove('open'); });
+  el.classList.toggle('open');
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.multi-select')) {
+    document.querySelectorAll('.multi-select.open').forEach(function(ms) { ms.classList.remove('open'); });
+  }
+});
+
+function getMultiSelectValues(msId) {
+  var el = document.getElementById(msId);
+  if (!el) return [];
+  var checked = el.querySelectorAll('input[type=checkbox]:checked');
+  var vals = [];
+  for (var i = 0; i < checked.length; i++) vals.push(checked[i].value);
+  return vals;
+}
+
+function onMultiSelectChange(msId, label) {
+  var el = document.getElementById(msId);
+  if (!el) return;
+  var vals = getMultiSelectValues(msId);
+  var total = el.querySelectorAll('input[type=checkbox]').length;
+  var btn = el.querySelector('.multi-select-btn');
+  if (btn) {
+    btn.textContent = vals.length > 0 && vals.length < total ? label + ' (' + vals.length + ')' : label;
+  }
+  applyFilters();
+}
+
+function applyFilters() {
+  var selectedDomains = getMultiSelectValues('domain-ms');
+  var selectedCrits = getMultiSelectValues('criticality-ms');
+
+  var sections = document.querySelectorAll('.issue-section');
+  for (var i = 0; i < sections.length; i++) {
+    var domain = sections[i].getAttribute('data-domain');
+    sections[i].style.display = (selectedDomains.length === 0 || selectedDomains.indexOf(domain) >= 0) ? '' : 'none';
+  }
+
+  var rows = document.querySelectorAll('.issue-row');
+  for (var i = 0; i < rows.length; i++) {
+    var row = rows[i];
+    var section = row.closest('.issue-section');
+    if (section && section.style.display === 'none') {
+      row.style.display = 'none';
+      var next = row.nextElementSibling;
+      if (next && next.classList.contains('detail-row')) next.style.display = 'none';
+      continue;
+    }
+
+    var show = true;
+    if (_currentTarget && row.hasAttribute('data-targets')) {
+      var targetsStr = row.getAttribute('data-targets');
+      if (targetsStr && targetsStr !== '{}') {
+        try {
+          var targets = JSON.parse(targetsStr);
+          if (Object.keys(targets).length > 0 && !targets[_currentTarget]) {
+            show = false;
+          }
+        } catch(e) {}
+      }
+    }
+
+    if (show && selectedCrits.length > 0) {
+      var crit = row.getAttribute('data-criticality');
+      if (selectedCrits.indexOf(crit) < 0) show = false;
+    }
+
+    row.style.display = show ? '' : 'none';
+    var nextRow = row.nextElementSibling;
+    if (nextRow && nextRow.classList.contains('detail-row')) {
+      if (!show) nextRow.style.display = 'none';
+    }
+  }
+}
+
+function clearAllFilters() {
+  document.querySelectorAll('.multi-select input[type=checkbox]').forEach(function(cb) { cb.checked = false; });
+  var domainBtn = document.querySelector('#domain-ms .multi-select-btn');
+  if (domainBtn) domainBtn.textContent = 'Domain';
+  var critBtn = document.querySelector('#criticality-ms .multi-select-btn');
+  if (critBtn) critBtn.textContent = 'Criticality';
+  applyFilters();
+}
+
+function onTargetChange(targetId) {
+  _currentTarget = targetId;
+  var rows = document.querySelectorAll('.issue-row[data-targets]');
+  var totalEffort = 0;
+  var domainCrits = {};
+
+  for (var i = 0; i < rows.length; i++) {
+    var row = rows[i];
+    var targets = JSON.parse(row.getAttribute('data-targets'));
+    var section = row.closest('.issue-section');
+    var domain = section ? section.getAttribute('data-domain') : '';
+
+    if (!targets || Object.keys(targets).length === 0) {
+      var sp = parseFloat(row.querySelector('.sp-cell').textContent) || 0;
+      totalEffort += sp;
+      if (!domainCrits[domain]) domainCrits[domain] = {mandatory:0,potential:0,optional:0};
+      var crit = row.getAttribute('data-criticality') || 'optional';
+      domainCrits[domain][crit] = (domainCrits[domain][crit] || 0) + 1;
+      continue;
+    }
+
+    var override = targets[targetId];
+    if (!override) {
+      continue;
+    }
+
+    var newSeverity = (override.severity || row.getAttribute('data-default-severity') || '').toLowerCase();
+    row.setAttribute('data-criticality', newSeverity);
+    var critCell = row.querySelector('.crit-cell');
+    if (critCell) {
+      var critText = newSeverity === 'mandatory' ? 'Mandatory' : newSeverity === 'potential' ? 'Potential' : 'Optional';
+      var cssClass = newSeverity === 'mandatory' ? 'crit-square-mandatory' : newSeverity === 'potential' ? 'crit-square-potential' : 'crit-square-optional';
+      critCell.innerHTML = '<span class="crit-label"><span class="crit-square ' + cssClass + '"></span>' + critText + '</span>';
+    }
+
+    var newEffort = override.effort !== undefined ? override.effort : parseFloat(row.getAttribute('data-default-effort')) || 0;
+    var spCell = row.querySelector('.sp-cell');
+    if (spCell) spCell.textContent = newEffort;
+    totalEffort += newEffort;
+
+    if (!domainCrits[domain]) domainCrits[domain] = {mandatory:0,potential:0,optional:0};
+    domainCrits[domain][newSeverity] = (domainCrits[domain][newSeverity] || 0) + 1;
+  }
+
+  var secSection = document.querySelector('.issue-section[data-domain="security"]');
+  if (secSection) {
+    var secRows = secSection.querySelectorAll('.issue-row');
+    for (var j = 0; j < secRows.length; j++) {
+      if (!secRows[j].hasAttribute('data-targets') || secRows[j].getAttribute('data-targets') === '') {
+        var sp = parseFloat(secRows[j].querySelector('.sp-cell').textContent) || 0;
+        totalEffort += sp;
+        if (!domainCrits['security']) domainCrits['security'] = {mandatory:0,potential:0,optional:0};
+        var sc = secRows[j].getAttribute('data-criticality') || 'optional';
+        domainCrits['security'][sc] = (domainCrits['security'][sc] || 0) + 1;
+      }
+    }
+  }
+
+  var label = totalEffort < 20 ? 'S' : totalEffort < 50 ? 'M' : totalEffort < 100 ? 'L' : 'XL';
+  var effortEl = document.getElementById('effort-display');
+  if (effortEl) effortEl.textContent = label + ' (total story points: ' + totalEffort + ')';
+
+  updateDonuts(domainCrits);
+  applyFilters();
+}
+
+function updateDonuts(domainCrits) {
+  var container = document.getElementById('donut-container');
+  if (!container) return;
+  container.innerHTML = '';
+  var domainNames = {'cloud-readiness':'Cloud Readiness','java-upgrade':'Java Upgrade','dotnet-upgrade':'DotNET Upgrade','security':'Security'};
+  var domainOrder = ['cloud-readiness','java-upgrade','dotnet-upgrade','security'];
+  for (var d = 0; d < domainOrder.length; d++) {
+    var key = domainOrder[d];
+    var c = domainCrits[key];
+    if (!c || (c.mandatory + c.potential + c.optional) === 0) continue;
+    var total = c.mandatory + c.potential + c.optional;
+    var div = document.createElement('div');
+    div.className = 'domain-summary-item';
+    div.innerHTML = buildDonutSvg(c.mandatory, c.potential, c.optional) +
+      '<h3>' + domainNames[key] + '</h3>' +
+      '<div class="count">' + total + ' issue' + (total !== 1 ? 's' : '') + '</div>';
+    container.appendChild(div);
+  }
+}
+
+function buildDonutSvg(m, p, o) {
+  var total = m + p + o;
+  if (total === 0) return '<svg viewBox="0 0 100 100" width="100" height="100" style="display:block;margin:0 auto;"><circle cx="50" cy="50" r="35" fill="none" stroke="#d0d7de" stroke-width="15" opacity="0.5"/></svg>';
+  var r = 35, circ = 2 * Math.PI * r, offset = 0;
+  var svg = '<svg viewBox="0 0 100 100" width="100" height="100" style="display:block;margin:0 auto;transform:rotate(-90deg);">';
+  var segs = [{c:m,color:'var(--color-mandatory)'},{c:p,color:'var(--color-potential)'},{c:o,color:'var(--color-optional)'}];
+  for (var i = 0; i < segs.length; i++) {
+    if (segs[i].c === 0) continue;
+    var segLen = (segs[i].c / total) * circ;
+    var gap = total > segs[i].c ? 1.5 : 0;
+    var drawLen = Math.max(segLen - gap, 0.5);
+    svg += '<circle cx="50" cy="50" r="' + r + '" fill="none" stroke="' + segs[i].color + '" stroke-width="15" stroke-dasharray="' + drawLen.toFixed(2) + ' ' + circ.toFixed(2) + '" stroke-dashoffset="' + (-offset).toFixed(2) + '"/>';
+    offset += segLen;
+  }
+  svg += '</svg>';
+  return svg;
+}
+</script>
+<script>document.addEventListener('DOMContentLoaded', function() { onTargetChange('azure-aks'); });</script>
+</div></body></html>
